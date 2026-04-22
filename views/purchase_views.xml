@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_cookast_purchase_stats" model="ir.actions.act_window">
+        <field name="name">Estadísticas de Compras (Dashboard)</field>
+        <field name="res_model">purchase.order</field>
+        <field name="view_mode">list,graph,pivot,form</field>
+        <field name="domain">[('state', 'in', ['purchase', 'done'])]</field>
+    </record>
+
+    <!-- Menú que cuelga de Cookast > Compras -->
+    <menuitem id="menu_cookast_purchase_stats"
+              name="Estadísticas de Compras"
+              parent="menu_cookast_compras"
+              action="action_cookast_purchase_stats"
+              sequence="10"/>
+</odoo>

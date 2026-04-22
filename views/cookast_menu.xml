@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ═══════════════════════════════════════════════════════
+         MENÚ RAÍZ
+    ═══════════════════════════════════════════════════════ -->
+    <menuitem id="menu_cookast_root" name="Cookast" sequence="80" web_icon="cookast_connector,static/description/icon.png"/>
+
+    <!-- Submenús principales -->
+    <menuitem id="menu_cookast_dashboard" name="Dashboard" parent="menu_cookast_root" sequence="10"/>
+    <menuitem id="menu_cookast_personal" name="Personal" parent="menu_cookast_root" sequence="20"/>
+    <menuitem id="menu_cookast_compras" name="Compras" parent="menu_cookast_root" sequence="40"/>
+    <menuitem id="menu_cookast_ai" name="IA" parent="menu_cookast_root" sequence="50"/>
+</odoo>

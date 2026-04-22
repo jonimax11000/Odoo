@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ═══════════════════════════════════════════════
+         VISTAS: cookast.shift.plan  (Planificación)
+    ═══════════════════════════════════════════════ -->
+
+    <!-- Calendar -->
+    <record id="view_shift_plan_calendar" model="ir.ui.view">
+        <field name="name">cookast.shift.plan.calendar</field>
+        <field name="model">cookast.shift.plan</field>
+        <field name="arch" type="xml">
+            <calendar string="Planificación de turnos" date_start="date" color="employee_id" quick_create="false">
+                <field name="employee_id"/>
+                <field name="shift"/>
+                <field name="role"/>
+                <field name="location_id"/>
+            </calendar>
+        </field>
+    </record>
+
+    <!-- List -->
+    <record id="view_shift_plan_list" model="ir.ui.view">
+        <field name="name">cookast.shift.plan.list</field>
+        <field name="model">cookast.shift.plan</field>
+        <field name="arch" type="xml">
+            <list string="Turnos planificados">
+                <field name="date"/>
+                <field name="shift"/>
+                <field name="location_id"/>
+                <field name="employee_id"/>
+                <field name="role"/>
+                <field name="planned_hours"/>
+                <field name="shift_cost" sum="Coste Total"/>
+                <field name="currency_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form -->
+    <record id="view_shift_plan_form" model="ir.ui.view">
+        <field name="name">cookast.shift.plan.form</field>
+        <field name="model">cookast.shift.plan</field>
+        <field name="arch" type="xml">
+            <form string="Turno planificado">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="forecast_id"/>
+                            <field name="employee_id"/>
+                            <field name="role"/>
+                        </group>
+                        <group>
+                            <field name="planned_hours"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="shift_cost" readonly="1"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search -->
+    <record id="view_shift_plan_search" model="ir.ui.view">
+        <field name="name">cookast.shift.plan.search</field>
+        <field name="model">cookast.shift.plan</field>
+        <field name="arch" type="xml">
+            <search string="Buscar turnos">
+                <field name="employee_id"/>
+                <field name="location_id"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- Acción -->
+    <record id="action_cookast_shift_plan" model="ir.actions.act_window">
+        <field name="name">Planificación de Turnos</field>
+        <field name="res_model">cookast.shift.plan</field>
+        <field name="view_mode">calendar,list,form</field>
+        <field name="search_view_id" ref="view_shift_plan_search"/>
+    </record>
+
+    <!-- Menú -->
+    <menuitem id="menu_cookast_shift_plan" name="Turnos" parent="menu_cookast_personal" action="action_cookast_shift_plan" sequence="10"/>
+</odoo>

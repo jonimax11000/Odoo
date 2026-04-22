@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ═══════════════════════════════════════════════
+         VISTAS: cookast.forecast  (Dashboard)
+    ═══════════════════════════════════════════════ -->
+
+    <!-- Graph: Previsión vs Real -->
+    <record id="view_cookast_forecast_graph" model="ir.ui.view">
+        <field name="name">cookast.forecast.graph</field>
+        <field name="model">cookast.forecast</field>
+        <field name="arch" type="xml">
+            <graph string="Previsión vs Real" type="bar" stacked="False">
+                <field name="date" type="row" interval="day"/>
+                <field name="shift" type="row"/>
+                <!-- Sin measures: aparecen todos en el botón "Medidas" -->
+            </graph>
+        </field>
+    </record>
+
+    <!-- Pivot: Detalle diario -->
+    <record id="view_cookast_forecast_pivot" model="ir.ui.view">
+        <field name="name">cookast.forecast.pivot</field>
+        <field name="model">cookast.forecast</field>
+        <field name="arch" type="xml">
+            <pivot string="Previsiones detalladas">
+                <field name="date" type="row"/>
+                <field name="location_id" type="row"/>
+                <field name="shift" type="col"/>
+                <field name="forecast_revenue" type="measure"/>
+                <field name="actual_revenue" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- List: detalle -->
+    <record id="view_cookast_forecast_list" model="ir.ui.view">
+        <field name="name">cookast.forecast.list</field>
+        <field name="model">cookast.forecast</field>
+        <field name="arch" type="xml">
+            <list string="Previsiones" decoration-danger="actual_revenue &gt; forecast_revenue">
+                <field name="date"/>
+                <field name="location_id"/>
+                <field name="shift"/>
+                <field name="forecast_revenue" sum="Total Previsión"/>
+                <field name="actual_revenue" sum="Total Real"/>
+                <field name="total_purchases" string="Compras" sum="Compras"/>
+                <field name="food_cost_pct" widget="percentage"/>
+                <field name="currency_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form: mantenimiento de previsiones -->
+    <record id="view_cookast_forecast_form" model="ir.ui.view">
+        <field name="name">cookast.forecast.form</field>
+        <field name="model">cookast.forecast</field>
+        <field name="arch" type="xml">
+            <form string="Previsión de turno">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="date"/>
+                            <field name="location_id"/>
+                            <field name="shift"/>
+                        </group>
+                        <group>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="forecast_revenue"/>
+                            <field name="actual_revenue"/>
+                            <field name="total_purchases" string="Compras del Día"/>
+                            <field name="food_cost_pct" widget="percentage" string="Food Cost Diario"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Pedidos POS">
+                            <field name="pos_order_ids" readonly="1">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="date_order"/>
+                                    <field name="amount_total"/>
+                                    <field name="state"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search corregida con filtros de fecha mutuamente excluyentes -->
+    <record id="view_cookast_forecast_search" model="ir.ui.view">
+        <field name="name">cookast.forecast.search</field>
+        <field name="model">cookast.forecast</field>
+        <field name="arch" type="xml">
+            <search string="Buscar previsiones">
+                <field name="date"/>
+                <field name="location_id"/>
+
+                <!-- Grupo de filtros de fecha (excluyentes entre sí) -->
+                <separator/>
+                <filter string="Fecha" name="group_by_date" context="{'group_by': 'date'}"/>
+
+                <!-- Grupo para otras agrupaciones -->
+                <separator/>
+                <filter string="Local" name="group_by_location" context="{'group_by': 'location_id'}"/>
+                <filter string="Turno" name="group_by_shift" context="{'group_by': 'shift'}"/>
+
+                <!-- Panel lateral (Searchpanel) para filtrar por Locales -->
+                <searchpanel>
+                    <field name="location_id" icon="fa-building" enable_counters="1" select="multi"/>
+                </searchpanel>
+            </search>
+        </field>
+    </record>
+
+    <!-- Log de sincronizaciones: list -->
+    <record id="view_cookast_sync_log_list" model="ir.ui.view">
+        <field name="name">cookast.sync.log.list</field>
+        <field name="model">cookast.sync.log</field>
+        <field name="arch" type="xml">
+            <list string="Log de sincronizaciones" decoration-danger="status=='error'">
+                <field name="sync_date"/>
+                <field name="model_synced"/>
+                <field name="records_processed"/>
+                <field name="status"/>
+                <field name="error_message"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ═══════ Acciones ══════════════════════════════════════════════════ -->
+    <record id="action_cookast_forecast_server" model="ir.actions.server">
+        <field name="name">Previsiones</field>
+        <field name="model_id" ref="model_cookast_forecast"/>
+        <field name="state">code</field>
+        <field name="code">
+# 1. Sincronizar en tiempo real
+env['cookast.forecast']._sync_pos_orders()
+# 2. Devolver la acción original para abrir las vistas
+action = {
+    'name': 'Previsiones',
+    'type': 'ir.actions.act_window',
+    'res_model': 'cookast.forecast',
+    'view_mode': 'graph,pivot,list,form',
+}
+        </field>
+    </record>
+
+    <record id="action_cookast_sync_log" model="ir.actions.act_window">
+        <field name="name">Log de Sincronizaciones</field>
+        <field name="res_model">cookast.sync.log</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <!-- ═══════ Entradas de menú ══════════════════════════════════════════ -->
+    <menuitem id="menu_cookast_forecast" name="Previsiones" parent="menu_cookast_dashboard" action="action_cookast_forecast_server" sequence="10"/>
+
+    <menuitem id="menu_cookast_sync_log" name="Log de Sincronizaciones" parent="menu_cookast_dashboard" action="action_cookast_sync_log" sequence="20"/>
+</odoo>

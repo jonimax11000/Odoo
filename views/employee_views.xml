@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ═══════════════════════════════════════════════
+         VISTAS: hr.employee  (Personal Cookast)
+    ═══════════════════════════════════════════════ -->
+
+    <!-- Pestaña Cookast en la ficha del empleado -->
+    <record id="view_employee_form_cookast" model="ir.ui.view">
+        <field name="name">hr.employee.form.cookast</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <notebook position="inside">
+                <page string="Cookast" name="cookast_tab">
+                    <group>
+                        <group string="Configuración de turno">
+                            <field name="cookast_level"/>
+                            <field name="cookast_manages_shift"/>
+                        </group>
+                        <group string="Costes y disponibilidad">
+                            <field name="currency_id" invisible="1"/>
+                            <field name="cookast_hourly_cost"/>
+                            <field name="cookast_max_weekly_hours"/>
+                        </group>
+                    </group>
+                    <separator string="Turnos planificados"/>
+                    <field name="shift_plan_ids" readonly="1">
+                        <list>
+                            <field name="date"/>
+                            <field name="shift"/>
+                            <field name="location_id"/>
+                            <field name="role"/>
+                            <field name="planned_hours"/>
+                            <field name="shift_cost"/>
+                            <field name="currency_id" column_invisible="1"/>
+                        </list>
+                    </field>
+                </page>
+            </notebook>
+        </field>
+    </record>
+
+    <!-- List: empleados con datos Cookast -->
+    <record id="view_employee_list_cookast" model="ir.ui.view">
+        <field name="name">hr.employee.list.cookast</field>
+        <field name="model">hr.employee</field>
+        <field name="arch" type="xml">
+            <list string="Personal Cookast">
+                <field name="name"/>
+                <field name="job_id"/>
+                <field name="cookast_level"/>
+                <field name="cookast_manages_shift" widget="boolean_toggle"/>
+                <field name="cookast_hourly_cost"/>
+                <field name="cookast_max_weekly_hours"/>
+                <field name="currency_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Kanban: empleados Cookast -->
+    <record id="view_employee_kanban_cookast" model="ir.ui.view">
+        <field name="name">hr.employee.kanban.cookast</field>
+        <field name="model">hr.employee</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="name"/>
+                <field name="job_id"/>
+                <field name="cookast_level"/>
+                <field name="cookast_manages_shift"/>
+                <field name="image_128"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="o_kanban_image">
+                            <field name="image_128" widget="image" class="o_image_64_rounded" options="{'alt': 'Foto'}"/>
+                        </div>
+                        <div class="oe_kanban_details">
+                            <strong><field name="name"/></strong>
+                            <div><field name="job_id"/></div>
+                            <div>
+                                <span class="badge rounded-pill bg-primary">
+                                    <field name="cookast_level"/>
+                                </span>
+                                <t t-if="record.cookast_manages_shift.raw_value">
+                                    <span class="badge rounded-pill bg-success ms-1">Responsable</span>
+                                </t>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Search empleados -->
+    <record id="view_employee_search_cookast" model="ir.ui.view">
+        <field name="name">hr.employee.search.cookast</field>
+        <field name="model">hr.employee</field>
+        <field name="arch" type="xml">
+            <search string="Buscar empleados Cookast">
+                <field name="name"/>
+                <field name="cookast_level"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- Acción -->
+    <record id="action_cookast_employees" model="ir.actions.act_window">
+        <field name="name">Personal Cookast</field>
+        <field name="res_model">hr.employee</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="view_ids"
+               eval="[(5, 0, 0),
+                      (0, 0, {'view_mode': 'kanban', 'view_id': ref('view_employee_kanban_cookast')}),
+                      (0, 0, {'view_mode': 'list',   'view_id': ref('view_employee_list_cookast')})]"/>
+        <field name="search_view_id" ref="view_employee_search_cookast"/>
+    </record>
+
+    <!-- Menú -->
+    <menuitem id="menu_cookast_employees"
+              name="Empleados"
+              parent="menu_cookast_personal"
+              action="action_cookast_employees"
+              sequence="10"/>
+</odoo>
