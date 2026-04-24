@@ -33,6 +33,7 @@
         'views/purchase_views.xml',
         'views/forecast_config_views.xml',  # <-- NUEVO
         'views/staffing_need_views.xml',    # <-- NUEVO
+        'views/mrp_views.xml',
         'views/ai_placeholder.xml',
     ],
     'installable': True,

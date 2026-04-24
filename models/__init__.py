@@ -7,4 +7,6 @@ from . import (
     cookast_shift_plan,
     cookast_forecast_config,
     cookast_staffing_need,
+    product_product,
+    cookast_mrp
 )

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- views/mrp_views.xml -->
+    <record id="view_mrp_bom_form_inherit_cookast" model="ir.ui.view">
+        <field name="name">mrp.bom.form.cookast</field>
+        <field name="model">mrp.bom</field>
+        <field name="inherit_id" ref="mrp.mrp_bom_form_view"/>
+        <field name="arch" type="xml">
+            <field name="product_id" position="after">
+                <field name="category_type" invisible="1"/>
+            </field>
+            <xpath expr="//group[@name='bom_cost']" position="after">
+                <group string="Información Restaurante" groups="cookast.group_cookast_manager">
+                    <field name="waste_percentage"/>
+                    <field name="prep_time_minutes"/>
+                    <field name="forecast_id"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>
