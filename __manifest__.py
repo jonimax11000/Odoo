@@ -22,6 +22,7 @@
         'sale_management',
         'hr',
         'stock',
+        'mrp',
     ],
     'data': [
         'security/ir.model.access.csv',
