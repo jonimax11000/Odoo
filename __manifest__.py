@@ -30,6 +30,8 @@
         'views/employee_views.xml',
         'views/shift_plan_views.xml',
         'views/purchase_views.xml',
+        'views/forecast_config_views.xml',  # <-- NUEVO
+        'views/staffing_need_views.xml',    # <-- NUEVO
         'views/ai_placeholder.xml',
     ],
     'installable': True,

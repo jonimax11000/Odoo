@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api
+from odoo.exceptions import ValidationError
 
 
 class CookastShiftPlan(models.Model):
@@ -13,6 +14,12 @@ class CookastShiftPlan(models.Model):
         'cookast.forecast',
         string='Turno / Previsión',
         required=True,
+        ondelete='cascade',
+        index=True,
+    )
+    staffing_need_id = fields.Many2one(
+        'cookast.staffing.need',
+        string='Necesidad de personal',
         ondelete='cascade',
         index=True,
     )
@@ -68,6 +75,24 @@ class CookastShiftPlan(models.Model):
     # ── Campo nombre (no usar display_name, es reservado por el ORM) ──────────
     name = fields.Char(string='Descripción', compute='_compute_name', store=True)
 
+    _sql_constraints = [
+        ('unique_employee_shift', 'UNIQUE(forecast_id, employee_id)',
+         'El empleado ya está asignado a este turno.'),
+    ]
+
+    # ── CRUD ──────────────────────────────────────────────────────────────────
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Auto-set forecast_id from staffing_need_id when not provided."""
+        for vals in vals_list:
+            if not vals.get('forecast_id') and vals.get('staffing_need_id'):
+                staffing = self.env['cookast.staffing.need'].browse(
+                    vals['staffing_need_id']
+                )
+                if staffing.forecast_id:
+                    vals['forecast_id'] = staffing.forecast_id.id
+        return super().create(vals_list)
+
     # ── Computes ──────────────────────────────────────────────────────────────
     @api.depends('employee_id', 'forecast_id')
     def _compute_name(self):
@@ -80,3 +105,15 @@ class CookastShiftPlan(models.Model):
     def _compute_shift_cost(self):
         for rec in self:
             rec.shift_cost = rec.employee_id.cookast_hourly_cost * rec.planned_hours
+
+    @api.constrains('forecast_id', 'employee_id')
+    def _check_unique_employee_shift(self):
+        for rec in self:
+            duplicate = self.search([
+                ('forecast_id', '=', rec.forecast_id.id),
+                ('employee_id', '=', rec.employee_id.id),
+                ('id', '!=', rec.id),
+            ])
+            if duplicate:
+                raise ValidationError(('El empleado ya está asignado a este turno.'))
+

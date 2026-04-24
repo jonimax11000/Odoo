@@ -2,3 +2,5 @@ id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_cookast_sync_log,cookast.sync.log,model_cookast_sync_log,base.group_user,1,1,1,0
 access_cookast_forecast,cookast.forecast,model_cookast_forecast,base.group_user,1,1,1,1
 access_cookast_shift_plan,cookast.shift.plan,model_cookast_shift_plan,base.group_user,1,1,1,1
+access_cookast_forecast_config,cookast.forecast.config,model_cookast_forecast_config,base.group_user,1,1,1,0
+access_cookast_staffing_need,cookast.staffing.need,model_cookast_staffing_need,base.group_user,1,1,1,1

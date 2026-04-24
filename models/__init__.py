@@ -5,4 +5,6 @@ from . import (
     cookast_pos_order,
     cookast_employee_extended,
     cookast_shift_plan,
+    cookast_forecast_config,
+    cookast_staffing_need,
 )

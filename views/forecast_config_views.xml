@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Form de configuración -->
+    <record id="view_cookast_forecast_config_form" model="ir.ui.view">
+        <field name="name">cookast.forecast.config.form</field>
+        <field name="model">cookast.forecast.config</field>
+        <field name="arch" type="xml">
+            <form string="Configuración del Forecast">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Nombre de la configuración"/>
+                        </h1>
+                    </div>
+                    <group string="Factores por día de la semana">
+                        <group>
+                            <field name="day_factor_mon"/>
+                            <field name="day_factor_tue"/>
+                            <field name="day_factor_wed"/>
+                            <field name="day_factor_thu"/>
+                        </group>
+                        <group>
+                            <field name="day_factor_fri"/>
+                            <field name="day_factor_sat"/>
+                            <field name="day_factor_sun"/>
+                        </group>
+                    </group>
+                    <group string="Factores por mes (estacionalidad)">
+                        <group>
+                            <field name="month_factor_jan"/>
+                            <field name="month_factor_feb"/>
+                            <field name="month_factor_mar"/>
+                            <field name="month_factor_apr"/>
+                            <field name="month_factor_may"/>
+                            <field name="month_factor_jun"/>
+                        </group>
+                        <group>
+                            <field name="month_factor_jul"/>
+                            <field name="month_factor_aug"/>
+                            <field name="month_factor_sep"/>
+                            <field name="month_factor_oct"/>
+                            <field name="month_factor_nov"/>
+                            <field name="month_factor_dec"/>
+                        </group>
+                    </group>
+                    <group string="Configuración general">
+                        <group>
+                            <field name="trend_factor"/>
+                            <field name="historical_weeks"/>
+                            <field name="default_base_revenue"/>
+                        </group>
+                        <group>
+                            <field name="ratio_eur_per_person"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Tree de configuración -->
+    <record id="view_cookast_forecast_config_tree" model="ir.ui.view">
+        <field name="name">cookast.forecast.config.tree</field>
+        <field name="model">cookast.forecast.config</field>
+        <field name="arch" type="xml">
+            <list string="Configuraciones de Forecast">
+                <field name="name"/>
+                <field name="trend_factor"/>
+                <field name="historical_weeks"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Acción -->
+    <record id="action_cookast_forecast_config" model="ir.actions.act_window">
+        <field name="name">Configuración del Forecast</field>
+        <field name="res_model">cookast.forecast.config</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- Menú (dentro de Cookast > Dashboard) -->
+    <menuitem id="menu_cookast_forecast_config" name="Configuración Forecast" parent="menu_cookast_dashboard" action="action_cookast_forecast_config" sequence="30"/>
+</odoo>
