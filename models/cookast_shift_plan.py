@@ -66,8 +66,8 @@ class CookastShiftPlan(models.Model):
         store=True,
         string='Turno',
     )
-    location_id = fields.Many2one(
-        related='forecast_id.location_id',
+    local_id = fields.Many2one(
+        related='forecast_id.local_id',
         store=True,
         string='Local',
     )

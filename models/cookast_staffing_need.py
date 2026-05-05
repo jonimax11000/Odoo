@@ -27,7 +27,7 @@ class CookastStaffingNeed(models.Model):
     # ── Datos del turno (relacionados) ────────────────────────────────────────
     date = fields.Date(related='forecast_id.date', store=True)
     shift = fields.Selection(related='forecast_id.shift', store=True)
-    location_id = fields.Many2one(related='forecast_id.location_id', store=True)
+    local_id = fields.Many2one(related='forecast_id.local_id', store=True)
     forecast_revenue = fields.Monetary(related='forecast_id.forecast_revenue', store=True)
     currency_id = fields.Many2one(related='forecast_id.currency_id')
     

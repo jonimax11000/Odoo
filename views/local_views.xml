@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ═══════════════════════════════════════════════════════════════════
+         VISTAS: cookast.local (Gestión de Locales / Franquicias)
+    ═══════════════════════════════════════════════════════════════════ -->
+
+    <!-- Kanban -->
+    <record id="view_cookast_local_kanban" model="ir.ui.view">
+        <field name="name">cookast.local.kanban</field>
+        <field name="model">cookast.local</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile" default_order="sequence, name">
+                <field name="id"/>
+                <field name="name"/>
+                <field name="short_code"/>
+                <field name="color"/>
+                <field name="forecast_count"/>
+                <field name="employee_count"/>
+                <field name="pos_count"/>
+                <templates>
+                    <t t-name="card">
+                        <div t-attf-class="oe_kanban_color_#{record.color.raw_value} oe_kanban_global_click">
+                            <div class="o_dropdown_kanban dropdown">
+                                <a class="dropdown-toggle o-no-caret btn" role="button" data-bs-toggle="dropdown" href="#" aria-label="Dropdown menu" title="Dropdown menu">
+                                    <span class="fa fa-ellipsis-v"/>
+                                </a>
+                                <div class="dropdown-menu" role="menu">
+                                    <t t-if="widget.editable"><a role="menuitem" type="edit" class="dropdown-item">Editar</a></t>
+                                    <t t-if="widget.deletable"><a role="menuitem" type="delete" class="dropdown-item">Eliminar</a></t>
+                                    <ul class="oe_kanban_colorpicker" data-field="color"/>
+                                </div>
+                            </div>
+                            <div class="oe_kanban_content">
+                                <div class="o_kanban_record_title">
+                                    <strong><field name="name"/></strong>
+                                    <span class="badge rounded-pill bg-secondary float-end"><field name="short_code"/></span>
+                                </div>
+                                <div class="text-muted mt-2">
+                                    <i class="fa fa-users" title="Empleados"/> <field name="employee_count"/>
+                                    <span class="mx-2">|</span>
+                                    <i class="fa fa-desktop" title="TPVs"/> <field name="pos_count"/>
+                                    <span class="mx-2">|</span>
+                                    <i class="fa fa-line-chart" title="Previsiones"/> <field name="forecast_count"/>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- List -->
+    <record id="view_cookast_local_list" model="ir.ui.view">
+        <field name="name">cookast.local.list</field>
+        <field name="model">cookast.local</field>
+        <field name="arch" type="xml">
+            <list string="Locales Cookast" decoration-muted="not active">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="short_code"/>
+                <field name="manager_id"/>
+                <field name="phone" optional="show"/>
+                <field name="employee_count" string="Empleados"/>
+                <field name="pos_count" string="TPVs"/>
+                <field name="last_forecast_date" optional="show"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form -->
+    <record id="view_cookast_local_form" model="ir.ui.view">
+        <field name="name">cookast.local.form</field>
+        <field name="model">cookast.local</field>
+        <field name="arch" type="xml">
+            <form string="Local Cookast">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_stock"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-cubes"
+                                invisible="not warehouse_id">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Inventario</span>
+                            </div>
+                        </button>
+                        <button name="action_view_pos"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-desktop">
+                            <field name="pos_count" widget="statinfo" string="TPVs"/>
+                        </button>
+                        <button name="action_view_employees"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-users">
+                            <field name="employee_count" widget="statinfo" string="Empleados"/>
+                        </button>
+                        <button name="action_view_forecasts"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-line-chart">
+                            <field name="forecast_count" widget="statinfo" string="Previsiones"/>
+                        </button>
+                    </div>
+
+                    <widget name="web_ribbon" title="Archivado" bg_color="bg-danger" invisible="active"/>
+
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1>
+                            <field name="name" placeholder="Ej: HUNDRED El Palmar"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group string="Información Básica">
+                            <field name="short_code" placeholder="Ej: HEP" readonly="id"/>
+                            <field name="manager_id"/>
+                            <field name="phone"/>
+                            <field name="email"/>
+                        </group>
+                        <group string="Configuración de Almacén">
+                            <field name="warehouse_id" invisible="not warehouse_id" readonly="1" options="{'no_open': True}"/>
+                            <field name="location_id" invisible="not location_id" readonly="1" options="{'no_open': True}"/>
+                            <field name="partner_id" placeholder="Dirección del local..."/>
+                            <field name="street" invisible="not partner_id"/>
+                            <field name="city" invisible="not partner_id"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Empleados" name="employees">
+                            <field name="employee_ids" widget="many2many">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="cookast_level"/>
+                                    <field name="cookast_manages_shift" widget="boolean_toggle"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Terminales (TPV)" name="pos_configs">
+                            <field name="pos_config_ids" widget="many2many" context="{'default_cookast_local_id': id}">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="picking_type_id" string="Operación de Stock"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Notas" name="notes">
+                            <field name="notes" placeholder="Notas internas..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search -->
+    <record id="view_cookast_local_search" model="ir.ui.view">
+        <field name="name">cookast.local.search</field>
+        <field name="model">cookast.local</field>
+        <field name="arch" type="xml">
+            <search string="Buscar locales">
+                <field name="name" string="Nombre"/>
+                <field name="short_code" string="Código"/>
+                <field name="manager_id" string="Manager"/>
+                <filter string="Archivados" name="inactive" domain="[('active', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- Acción -->
+    <record id="action_cookast_local" model="ir.actions.act_window">
+        <field name="name">Locales</field>
+        <field name="res_model">cookast.local</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Crea tu primer local
+            </p>
+            <p>
+                Añade los locales de tu franquicia. Al crear un local, Odoo generará
+                automáticamente un almacén independiente para llevar un control exacto
+                del inventario por cada sucursal.
+            </p>
+        </field>
+    </record>
+
+</odoo>

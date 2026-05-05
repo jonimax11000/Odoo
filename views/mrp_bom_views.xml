@@ -1,21 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- views/mrp_views.xml -->
+    <!-- ═══════════════════════════════════════════════════════════════════
+         EXTENSIÓN DE PRODUCTO: Añade campo category_type a la ficha
+    ═══════════════════════════════════════════════════════════════════ -->
+
+    <record id="view_product_template_form_cookast_type" model="ir.ui.view">
+        <field name="name">product.template.form.cookast.type</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_only_form_view"/>
+        <field name="arch" type="xml">
+            <field name="categ_id" position="after">
+                <field name="category_type"/>
+            </field>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         EXTENSIÓN DE mrp.bom FORM — Campos Cookast
+    ═══════════════════════════════════════════════════════════════════ -->
+
     <record id="view_mrp_bom_form_inherit_cookast" model="ir.ui.view">
         <field name="name">mrp.bom.form.cookast</field>
         <field name="model">mrp.bom</field>
         <field name="inherit_id" ref="mrp.mrp_bom_form_view"/>
         <field name="arch" type="xml">
-            <field name="product_id" position="after">
-                <field name="category_type" invisible="1"/>
+            <!-- Añadir campos Cookast después de la cantidad de producto -->
+            <field name="product_qty" position="after">
+                <field name="waste_percentage"/>
+                <field name="prep_time_minutes"/>
             </field>
-            <xpath expr="//group[@name='bom_cost']" position="after">
-                <group string="Información Restaurante" groups="cookast.group_cookast_manager">
-                    <field name="waste_percentage"/>
-                    <field name="prep_time_minutes"/>
-                    <field name="forecast_id"/>
+            <!-- Añadir costes calculados en un grupo nuevo -->
+            <xpath expr="//sheet/notebook" position="before">
+                <group string="Costes Calculados" class="oe_subtotal_footer">
+                    <field name="cookast_total_cost"/>
+                    <field name="cookast_unit_cost"/>
+                    <field name="cookast_component_count"/>
                 </group>
+            </xpath>
+            <!-- Añadir columnas de stock en las líneas de componentes -->
+            <xpath expr="//field[@name='bom_line_ids']//list//field[@name='product_qty']" position="after">
+                <field name="cookast_line_cost" optional="show"/>
+                <field name="cookast_qty_available"
+                       decoration-danger="cookast_qty_available &lt;= 0"
+                       decoration-warning="cookast_qty_available &lt; product_qty * 5"
+                       optional="show"/>
+                <field name="cookast_stock_status" widget="badge"
+                       decoration-success="cookast_stock_status == 'ok'"
+                       decoration-warning="cookast_stock_status == 'low'"
+                       decoration-danger="cookast_stock_status == 'out'"
+                       optional="show"/>
             </xpath>
         </field>
     </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         EXTENSIÓN DE mrp.bom LIST — Columnas extra
+    ═══════════════════════════════════════════════════════════════════ -->
+
+    <record id="view_mrp_bom_list_inherit_cookast" model="ir.ui.view">
+        <field name="name">mrp.bom.list.cookast</field>
+        <field name="model">mrp.bom</field>
+        <field name="inherit_id" ref="mrp.mrp_bom_tree_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//list" position="inside">
+                <field name="cookast_total_cost" optional="show"/>
+                <field name="cookast_component_count" optional="show"/>
+                <field name="waste_percentage" optional="hide"/>
+                <field name="prep_time_minutes" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
 </odoo>

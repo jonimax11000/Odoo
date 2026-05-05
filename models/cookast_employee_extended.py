@@ -5,7 +5,24 @@ from odoo import models, fields
 class HrEmployee(models.Model):
     _inherit = 'hr.employee'
 
-    # ── Datos Cookast ─────────────────────────────────────────────────────────
+    # ── Local principal ("home local") ────────────────────────────────────────
+    cookast_local_id = fields.Many2one(
+        'cookast.local',
+        string='Local principal',
+        help='Local donde trabaja habitualmente. Si se rota a otro local '
+             'para un turno concreto, se refleja en el plan de turno.',
+    )
+    cookast_local_ids = fields.Many2many(
+        'cookast.local',
+        'cookast_local_employee_rel',
+        'employee_id',
+        'local_id',
+        string='Locales asignados',
+        help='Todos los locales en los que puede trabajar este empleado. '
+             'El local principal se añade automáticamente.',
+    )
+
+    # ── Datos Cookast de turno y coste ────────────────────────────────────────
     cookast_level = fields.Selection(
         [
             ('responsible', 'Responsable'),

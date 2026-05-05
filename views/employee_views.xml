@@ -17,6 +17,10 @@
                             <field name="cookast_level"/>
                             <field name="cookast_manages_shift"/>
                         </group>
+                        <group string="Asignación de Locales">
+                            <field name="cookast_local_id"/>
+                            <field name="cookast_local_ids" widget="many2many_tags" options="{'color_field': 'color'}"/>
+                        </group>
                         <group string="Costes y disponibilidad">
                             <field name="currency_id" invisible="1"/>
                             <field name="cookast_hourly_cost"/>
@@ -28,7 +32,7 @@
                         <list>
                             <field name="date"/>
                             <field name="shift"/>
-                            <field name="location_id"/>
+                            <field name="local_id"/>
                             <field name="role"/>
                             <field name="planned_hours"/>
                             <field name="shift_cost"/>
@@ -48,6 +52,7 @@
             <list string="Personal Cookast">
                 <field name="name"/>
                 <field name="job_id"/>
+                <field name="cookast_local_id"/>
                 <field name="cookast_level"/>
                 <field name="cookast_manages_shift" widget="boolean_toggle"/>
                 <field name="cookast_hourly_cost"/>
@@ -83,6 +88,9 @@
                                 <t t-if="record.cookast_manages_shift.raw_value">
                                     <span class="badge rounded-pill bg-success ms-1">Responsable</span>
                                 </t>
+                                <t t-if="record.cookast_local_id.value">
+                                    <span class="badge rounded-pill bg-info ms-1"><field name="cookast_local_id"/></span>
+                                </t>
                             </div>
                         </div>
                     </t>
@@ -99,6 +107,10 @@
             <search string="Buscar empleados Cookast">
                 <field name="name"/>
                 <field name="cookast_level"/>
+                <field name="cookast_local_ids" string="Local asignado"/>
+                <filter string="Mi Local Principal" name="my_local" domain="[('cookast_local_id', '!=', False)]"/>
+                <separator/>
+                <filter string="Agrupar por Local Principal" name="group_local" context="{'group_by': 'cookast_local_id'}"/>
             </search>
         </field>
     </record>

@@ -60,7 +60,7 @@
                 <field name="forecast_id"/>
                 <field name="date"/>
                 <field name="shift"/>
-                <field name="location_id"/>
+                <field name="local_id"/>
                 <field name="forecast_revenue"/>
                 <field name="total_persons"/>
                 <field name="responsible_qty"/>

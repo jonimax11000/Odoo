@@ -21,11 +21,22 @@ class CookastForecast(models.Model):
     # ── Identificación ────────────────────────────────────────────────────────
     name = fields.Char(string='Referencia', compute='_compute_name', store=True)
     date = fields.Date(string='Fecha', required=True)
+    local_id = fields.Many2one(
+        'cookast.local',
+        string='Local',
+        required=True,
+        index=True,
+        ondelete='restrict',
+        help='Local/sucursal al que pertenece esta previsión.',
+    )
+    # location_id se deriva del almacén del local. Se mantiene como stored
+    # para compatibilidad con la SQL view de cookast.material.need y filtros.
     location_id = fields.Many2one(
         'stock.location',
-        string='Local',
-        domain=[('usage', '=', 'internal')],
-        required=True,
+        string='Ubicación de stock',
+        related='local_id.location_id',
+        store=True,
+        readonly=True,
     )
     shift = fields.Selection(
         [('lunch', 'Comida'), ('dinner', 'Cena')],
@@ -114,16 +125,16 @@ class CookastForecast(models.Model):
 
     # ── Constraints ──────────────────────────────────────────────────────────
     _sql_constraints = [
-        ('unique_forecast', 'UNIQUE(date, location_id, shift)',
+        ('unique_forecast', 'UNIQUE(date, local_id, shift)',
          'Ya existe una previsión para este local, fecha y turno.'),
     ]
 
-    @api.constrains('date', 'location_id', 'shift')
+    @api.constrains('date', 'local_id', 'shift')
     def _check_unique_forecast(self):
         for rec in self:
             duplicate = self.search([
                 ('date', '=', rec.date),
-                ('location_id', '=', rec.location_id.id),
+                ('local_id', '=', rec.local_id.id),
                 ('shift', '=', rec.shift),
                 ('id', '!=', rec.id),
             ])
@@ -133,11 +144,11 @@ class CookastForecast(models.Model):
                 ))
 
     # ── Computes ──────────────────────────────────────────────────────────────
-    @api.depends('date', 'location_id', 'shift')
+    @api.depends('date', 'local_id', 'shift')
     def _compute_name(self):
         shift_labels = dict(self._fields['shift'].selection)
         for rec in self:
-            loc = rec.location_id.name or '—'
+            loc = rec.local_id.name or '—'
             shift = shift_labels.get(rec.shift, rec.shift or '—')
             rec.name = f"{rec.date} · {loc} · {shift}"
 
@@ -228,7 +239,7 @@ class CookastForecast(models.Model):
             
             # Buscar histórico del mismo día de semana, mismo local y turno
             past_forecasts = self.search([
-                ('location_id', '=', record.location_id.id),
+                ('local_id', '=', record.local_id.id),
                 ('shift', '=', record.shift),
                 ('date', '<', record.date),
                 ('actual_revenue', '>', 0),
@@ -356,21 +367,32 @@ class CookastForecast(models.Model):
                     continue
 
                 order_date = order_dt.date()
-                location = order.config_id.picking_type_id.default_location_src_id
 
-                if not location:
+                # Obtener el local desde la config del TPV
+                local = None
+                if order.config_id.cookast_local_id:
+                    local = order.config_id.cookast_local_id
+                else:
+                    # Fallback: buscar por ubicación si el TPV no tiene local asignado
+                    src_location = order.config_id.picking_type_id.default_location_src_id
+                    if src_location:
+                        local = self.env['cookast.local'].search(
+                            [('location_id', '=', src_location.id)], limit=1
+                        )
+
+                if not local:
                     continue
 
                 forecast = self.search([
                     ('date', '=', order_date),
-                    ('location_id', '=', location.id),
+                    ('local_id', '=', local.id),
                     ('shift', '=', shift),
                 ], limit=1)
 
                 if not forecast:
                     forecast = self.create({
                         'date': order_date,
-                        'location_id': location.id,
+                        'local_id': local.id,
                         'shift': shift,
                         'forecast_revenue': 0.0,
                     })
@@ -408,21 +430,24 @@ class CookastForecast(models.Model):
                     continue
 
                 order_date = order_dt.date()
-                location = order.warehouse_id.lot_stock_id
+                # Para ventas: buscar el local por el almacén del pedido
+                local = self.env['cookast.local'].search(
+                    [('warehouse_id', '=', order.warehouse_id.id)], limit=1
+                )
 
-                if not location:
+                if not local:
                     continue
 
                 forecast = self.search([
                     ('date', '=', order_date),
-                    ('location_id', '=', location.id),
+                    ('local_id', '=', local.id),
                     ('shift', '=', shift),
                 ], limit=1)
 
                 if not forecast:
                     forecast = self.create({
                         'date': order_date,
-                        'location_id': location.id,
+                        'local_id': local.id,
                         'shift': shift,
                         'forecast_revenue': 0.0,
                     })

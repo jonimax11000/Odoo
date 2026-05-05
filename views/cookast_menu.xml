@@ -7,6 +7,7 @@
 
     <!-- Submenús principales -->
     <menuitem id="menu_cookast_dashboard" name="Dashboard" parent="menu_cookast_root" sequence="10"/>
+    <menuitem id="menu_cookast_locales" name="Locales" parent="menu_cookast_root" action="action_cookast_local" sequence="15"/>
     <menuitem id="menu_cookast_personal" name="Personal" parent="menu_cookast_root" sequence="20"/>
     <menuitem id="menu_cookast_compras" name="Compras" parent="menu_cookast_root" sequence="40"/>
     <menuitem id="menu_cookast_ai" name="IA" parent="menu_cookast_root" sequence="50"/>

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Cookast Connector',
-    'version': '19.0.1.0.0',
+    'version': '19.0.3.0.0',
     'category': 'Operations/Foodservice',
     'summary': 'Integración con Cookast: Previsiones, Compras y Personal',
     'description': """
@@ -26,14 +26,16 @@
     ],
     'data': [
         'security/ir.model.access.csv',
+        'views/local_views.xml',
         'views/cookast_menu.xml',
         'views/dashboard_views.xml',
         'views/employee_views.xml',
         'views/shift_plan_views.xml',
         'views/purchase_views.xml',
-        'views/forecast_config_views.xml',  # <-- NUEVO
-        'views/staffing_need_views.xml',    # <-- NUEVO
-        'views/mrp_views.xml',
+        'views/forecast_config_views.xml',
+        'views/staffing_need_views.xml',
+        'views/mrp_bom_views.xml',
+        'views/cookast_bom_views.xml',
         'views/ai_placeholder.xml',
     ],
     'installable': True,
