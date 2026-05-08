@@ -109,6 +109,13 @@ class CookastStaffingKpi(models.TransientModel):
         for data in kpi_list:
             self.create(data)
 
+    @api.model
+    def search_read(self, domain=None, fields=None, offset=0, limit=None, order=None):
+        """Asegura que siempre existan 3 tarjetas KPI al abrir la vista."""
+        if not self.search_count([]):
+            self._refresh_kpis(domain=[])
+        return super().search_read(domain=domain, fields=fields, offset=offset, limit=limit, order=order)
+
 
 class CookastStaffingKpiWizard(models.TransientModel):
     """

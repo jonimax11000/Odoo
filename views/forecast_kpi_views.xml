@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- ══════  1. Definiciones de acciones (primero)  ══════ -->
-
-    <!-- Acción del wizard de filtros (referenciada en el kanban) -->
+    <!-- ══════  1. Acciones ══════ -->
     <record id="action_cookast_forecast_kpi_wizard" model="ir.actions.act_window">
         <field name="name">Filtrar Previsiones</field>
         <field name="res_model">cookast.forecast.kpi.wizard</field>
@@ -10,8 +8,8 @@
         <field name="target">new</field>
     </record>
 
-    <!-- Server Action para abrir el kanban de KPIs (menú Previsiones) -->
-    <record id="action_cookast_forecast_kpi_server" model="ir.actions.server">
+    <!-- NUEVA Server Action (ID diferente) -->
+    <record id="action_cookast_forecast_kpi_server_action" model="ir.actions.server">
         <field name="name">Previsiones – Dashboard KPI</field>
         <field name="model_id" ref="model_cookast_forecast_kpi"/>
         <field name="state">code</field>
@@ -26,18 +24,18 @@ action = {
     'view_mode': 'kanban',
     'views': [(False, 'kanban')],
     'target': 'current',
-    'context': {'create': False},
+    'context': {'create': False, 'edit': False},
 }
         </field>
     </record>
 
-    <!-- Acción "Ver Detalle" – abre forecast list/graph/pivot -->
     <record id="action_cookast_forecast_detail" model="ir.actions.act_window">
         <field name="name">Detalle de Previsiones</field>
         <field name="res_model">cookast.forecast</field>
         <field name="view_mode">list,graph,pivot,form</field>
         <field name="search_view_id" ref="view_cookast_forecast_search"/>
     </record>
+
 
     <!-- ══════  2. Vistas  ══════ -->
 
@@ -127,12 +125,10 @@ action = {
 
     <!-- ══════  3. Menús  ══════ -->
 
-    <!-- Dashboard KPI -->
-    <menuitem id="menu_cookast_forecast_kpi" name="Dashboard KPIs" parent="menu_cookast_dashboard" action="action_cookast_forecast_kpi_server" sequence="5"/>
+    <!-- ══════  3. Menús ══════ -->
+    <menuitem id="menu_cookast_forecast_kpi" name="Dashboard KPIs" parent="menu_cookast_dashboard" action="action_cookast_forecast_kpi_server_action" sequence="5"/>
 
-    <!-- Vista completa de Previsiones (con gráficas) -->
     <menuitem id="menu_cookast_forecast" name="Previsiones" parent="menu_cookast_dashboard" action="action_cookast_forecast_detail" sequence="10"/>
 
     <menuitem id="menu_cookast_sync_log" name="Log de Sincronizaciones" parent="menu_cookast_dashboard" action="action_cookast_sync_log" sequence="20"/>
-
 </odoo>

@@ -1,21 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- ══════ 1. Acción del Wizard de filtros (primero) ══════ -->
+    <!-- Acción del wizard de filtros -->
     <record id="action_cookast_staffing_kpi_wizard" model="ir.actions.act_window">
         <field name="name">Filtrar Turnos</field>
         <field name="res_model">cookast.staffing.kpi.wizard</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>
-        <field name="context">{}</field>
     </record>
 
-    <!-- ══════ 2. Server Action para abrir el KPI Kanban ══════ -->
-    <record id="action_cookast_staffing_kpi_server" model="ir.actions.server">
+    <!-- NUEVA Server Action para abrir el Kanban de Personal -->
+    <record id="action_cookast_staffing_kpi_server_action" model="ir.actions.server">
         <field name="name">Personal – Dashboard KPI</field>
         <field name="model_id" ref="model_cookast_staffing_kpi"/>
         <field name="state">code</field>
         <field name="code">
-env['cookast.staffing.kpi']._refresh_kpis(domain=[])
+# Regenerar KPIs con todos los datos (sin filtros por defecto) env['cookast.staffing.kpi']._refresh_kpis(domain=[])
+
+# Abrir la vista kanban de KPIs
 action = {
     'name': 'Necesidades de personal',
     'type': 'ir.actions.act_window',
@@ -23,7 +24,7 @@ action = {
     'view_mode': 'kanban',
     'views': [(False, 'kanban')],
     'target': 'current',
-    'context': {'create': False},
+    'context': {'create': False, 'edit': False},
 }
         </field>
     </record>
