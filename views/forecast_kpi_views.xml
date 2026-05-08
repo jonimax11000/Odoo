@@ -53,11 +53,6 @@ action = {
                 <field name="value_char"/>
                 <field name="icon"/>
                 <field name="color_class"/>
-
-                <control>
-                    <button string="🔄 Actualizar con filtros" type="action" name="%(cookast.action_cookast_forecast_kpi_wizard)d"/>
-                </control>
-
                 <templates>
                     <t t-name="card">
                         <div t-attf-class="o_kpi_card #{record.color_class.value}">
@@ -124,6 +119,8 @@ action = {
     </record>
 
     <!-- ══════  3. Menús ══════ -->
+    <!-- Menú para abrir el wizard de filtros sin cerrar el dashboard -->
+    <menuitem id="menu_cookast_forecast_kpi_filter" name="Filtros Previsiones" parent="menu_cookast_dashboard" action="action_cookast_forecast_kpi_wizard" sequence="6"/>
     <menuitem id="menu_cookast_forecast_kpi" name="Dashboard KPIs" parent="menu_cookast_dashboard" action="action_cookast_forecast_kpi_server_action" sequence="5"/>
 
     <menuitem id="menu_cookast_forecast" name="Previsiones" parent="menu_cookast_dashboard" action="action_cookast_forecast_detail" sequence="10"/>

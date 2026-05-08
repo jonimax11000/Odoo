@@ -47,10 +47,6 @@ action = {
                 <field name="icon"/>
                 <field name="color_class"/>
 
-                <control>
-                    <button string="🔄 Actualizar con filtros" type="action" name="%(cookast.action_cookast_staffing_kpi_wizard)d"/>
-                </control>
-
                 <templates>
                     <t t-name="card">
                         <div t-attf-class="o_kpi_card #{record.color_class.value}">
@@ -115,4 +111,7 @@ action = {
             </form>
         </field>
     </record>
+
+    <!-- ══════ 3. Menús ══════ -->
+    <menuitem id="menu_cookast_staffing_kpi_filter" name="Filtros Personal" parent="menu_cookast_personal" action="action_cookast_staffing_kpi_wizard" sequence="16"/>
 </odoo>
