@@ -123,8 +123,6 @@ action = {
         </field>
     </record>
 
-    <!-- ══════  3. Menús  ══════ -->
-
     <!-- ══════  3. Menús ══════ -->
     <menuitem id="menu_cookast_forecast_kpi" name="Dashboard KPIs" parent="menu_cookast_dashboard" action="action_cookast_forecast_kpi_server_action" sequence="5"/>
 
