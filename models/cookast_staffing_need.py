@@ -222,18 +222,25 @@ class CookastStaffingNeed(models.Model):
             ('shift', '=', self.forecast_id.shift),
         ]).mapped('employee_id.id')
         
-        # 3) Buscar empleados disponibles por nivel (no ocupados en este turno)
+        # 3) Buscar empleados disponibles por nivel, FILTRADOS AL LOCAL DE ESTE TURNO
+        #    Solo se consideran empleados asignados al local de la previsión.
+        local = self.forecast_id.local_id
+        local_employee_ids = local.employee_ids.ids if local else []
+
         employees_resp = self.env['hr.employee'].search([
             ('cookast_level', '=', 'responsible'),
             ('id', 'not in', busy_employee_ids),
+            ('id', 'in', local_employee_ids),
         ])
         employees_senior = self.env['hr.employee'].search([
             ('cookast_level', '=', 'senior'),
             ('id', 'not in', busy_employee_ids),
+            ('id', 'in', local_employee_ids),
         ])
         employees_junior = self.env['hr.employee'].search([
             ('cookast_level', '=', 'junior'),
             ('id', 'not in', busy_employee_ids),
+            ('id', 'in', local_employee_ids),
         ])
         
         # 4) Calcular horas semanales ya planificadas (estado limpio)

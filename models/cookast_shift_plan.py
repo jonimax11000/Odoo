@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from odoo import models, fields, api
+from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
 
 
@@ -115,5 +115,33 @@ class CookastShiftPlan(models.Model):
                 ('id', '!=', rec.id),
             ])
             if duplicate:
-                raise ValidationError(('El empleado ya está asignado a este turno.'))
+                raise ValidationError(_('El empleado ya está asignado a este turno.'))
+
+    @api.constrains('employee_id', 'date', 'shift')
+    def _check_no_overlap_across_locals(self):
+        """
+        Impide que un empleado sea asignado a dos turnos del mismo tipo
+        en el mismo día aunque sean en locales distintos.
+        Previene solapamientos en empleados que trabajan en múltiples sucursales.
+        """
+        for rec in self:
+            if not rec.date or not rec.shift:
+                continue
+            overlap = self.search([
+                ('employee_id', '=', rec.employee_id.id),
+                ('date', '=', rec.date),
+                ('shift', '=', rec.shift),
+                ('id', '!=', rec.id),
+            ])
+            if overlap:
+                other_local = overlap[0].local_id.name or _('otro local')
+                raise ValidationError(_(
+                    'El empleado "%s" ya tiene asignado el turno de %s del %s '
+                    'en "%s". No se pueden solapar turnos aunque sean en locales distintos.'
+                ) % (
+                    rec.employee_id.name,
+                    dict(rec._fields['shift'].selection).get(rec.shift, rec.shift),
+                    rec.date,
+                    other_local,
+                ))
 

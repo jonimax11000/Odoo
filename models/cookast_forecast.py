@@ -86,7 +86,7 @@ class CookastForecast(models.Model):
         string='Food Cost (%)',
         compute='_compute_purchase_stats',
         store=True,
-        group_operator='avg',
+        aggregator='avg',
     )
 
     # ── Pedidos POS y Ventas vinculados ──────────────────────────────────────────
@@ -165,21 +165,29 @@ class CookastForecast(models.Model):
             rec.actual_revenue = sum(confirmed_pos.mapped('amount_total')) + \
                                  sum(confirmed_sales.mapped('amount_total'))
 
-    @api.depends('actual_revenue')
+    @api.depends('actual_revenue', 'date', 'local_id', 'shift')
     def _compute_purchase_stats(self):
         for rec in self:
             total_pur = 0.0
             if rec.date:
                 start_dt = fields.Datetime.to_datetime(rec.date)
                 end_dt = start_dt.replace(hour=23, minute=59, second=59)
-                
-                purchases = self.env['purchase.order'].search([
+
+                domain = [
                     ('state', 'in', ['purchase', 'done']),
                     ('date_order', '>=', start_dt),
                     ('date_order', '<=', end_dt),
-                ])
+                ]
+
+                # Filtrar por almacén del local si está configurado
+                if rec.local_id and rec.local_id.warehouse_id:
+                    domain.append(
+                        ('picking_type_id.warehouse_id', '=', rec.local_id.warehouse_id.id)
+                    )
+
+                purchases = self.env['purchase.order'].search(domain)
                 total_pur = sum(purchases.mapped('amount_total'))
-            
+
             rec.total_purchases = total_pur
             if rec.actual_revenue > 0:
                 rec.food_cost_pct = (total_pur / rec.actual_revenue) * 100
@@ -470,3 +478,53 @@ class SaleOrder(models.Model):
         ondelete='set null',
         index=True,
     )
+
+
+class PurchaseOrder(models.Model):
+    """
+    Hook en purchase.order:
+    Al confirmar, cancelar o modificar el importe de una compra,
+    invalida los forecasts afectados para que recalculen
+    total_purchases y food_cost_pct.
+    """
+    _inherit = 'purchase.order'
+
+    def _invalidate_cookast_forecasts(self):
+        """Encuentra y recalcula los forecasts del día/almacén de estas compras."""
+        Forecast = self.env['cookast.forecast']
+        for po in self:
+            if not po.date_order:
+                continue
+            order_date = fields.Date.to_date(po.date_order)
+            warehouse = po.picking_type_id.warehouse_id if po.picking_type_id else None
+
+            domain = [('date', '=', order_date)]
+            if warehouse:
+                domain.append(('local_id.warehouse_id', '=', warehouse.id))
+
+            forecasts = Forecast.search(domain)
+            if forecasts:
+                # Forzar recálculo de los campos de compra en esos forecasts
+                forecasts._compute_purchase_stats()
+                # Guardar los nuevos valores en BD
+                for f in forecasts:
+                    f.write({
+                        'total_purchases': f.total_purchases,
+                        'food_cost_pct': f.food_cost_pct,
+                    })
+
+    def button_confirm(self):
+        res = super().button_confirm()
+        self._invalidate_cookast_forecasts()
+        return res
+
+    def button_cancel(self):
+        res = super().button_cancel()
+        self._invalidate_cookast_forecasts()
+        return res
+
+    def write(self, vals):
+        res = super().write(vals)
+        if 'amount_total' in vals or 'state' in vals:
+            self._invalidate_cookast_forecasts()
+        return res
