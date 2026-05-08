@@ -208,26 +208,20 @@
     </record>
 
     <!-- ═══════ Acciones ══════════════════════════════════════════════════ -->
-    <record id="action_cookast_forecast_server" model="ir.actions.server">
-        <field name="name">Previsiones</field>
+
+    <!-- Acción de sincronización de datos (usada internamente) -->
+    <record id="action_cookast_forecast_sync" model="ir.actions.server">
+        <field name="name">Sincronizar Previsiones</field>
         <field name="model_id" ref="model_cookast_forecast"/>
         <field name="state">code</field>
         <field name="code">
-# 1. Sincronizar en tiempo real (POS y Ventas)
+# Sincronizar POS y Ventas en tiempo real
 env['cookast.forecast']._sync_pos_orders()
 
-# 2. Recalcular forecast_revenue para registros que lo necesiten
+# Recalcular forecast_revenue para registros pendientes
 forecasts_to_compute = env['cookast.forecast'].search([('forecast_revenue', '=', 0)])
 if forecasts_to_compute:
     forecasts_to_compute._compute_forecast_revenue()
-
-# 3. Devolver la acción original para abrir las vistas
-action = {
-    'name': 'Previsiones',
-    'type': 'ir.actions.act_window',
-    'res_model': 'cookast.forecast',
-    'view_mode': 'graph,pivot,list,form',
-}
         </field>
     </record>
 
@@ -245,8 +239,5 @@ action = {
         <field name="target">current</field>
     </record>
 
-    <!-- ═══════ Entradas de menú ══════════════════════════════════════════ -->
-    <menuitem id="menu_cookast_forecast" name="Previsiones" parent="menu_cookast_dashboard" action="action_cookast_forecast_server" sequence="10"/>
-
-    <menuitem id="menu_cookast_sync_log" name="Log de Sincronizaciones" parent="menu_cookast_dashboard" action="action_cookast_sync_log" sequence="20"/>
+    <!-- Menú: las entradas de Previsiones y Sync Log están en forecast_kpi_views.xml -->
 </odoo>

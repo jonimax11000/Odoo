@@ -6,3 +6,7 @@ access_cookast_forecast_config,cookast.forecast.config,model_cookast_forecast_co
 access_cookast_staffing_need,cookast.staffing.need,model_cookast_staffing_need,base.group_user,1,1,1,1
 access_cookast_material_need,cookast.material.need,model_cookast_material_need,base.group_user,1,0,0,0
 access_cookast_local,cookast.local,model_cookast_local,base.group_user,1,1,1,1
+access_cookast_forecast_kpi,cookast.forecast.kpi,model_cookast_forecast_kpi,base.group_user,1,1,1,1
+access_cookast_forecast_kpi_wizard,cookast.forecast.kpi.wizard,model_cookast_forecast_kpi_wizard,base.group_user,1,1,1,1
+access_cookast_staffing_kpi,cookast.staffing.kpi,model_cookast_staffing_kpi,base.group_user,1,1,1,1
+access_cookast_staffing_kpi_wizard,cookast.staffing.kpi.wizard,model_cookast_staffing_kpi_wizard,base.group_user,1,1,1,1

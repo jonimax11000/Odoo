@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ══════  1. Definiciones de acciones (primero)  ══════ -->
+
+    <!-- Acción del wizard de filtros (referenciada en el kanban) -->
+    <record id="action_cookast_forecast_kpi_wizard" model="ir.actions.act_window">
+        <field name="name">Filtrar Previsiones</field>
+        <field name="res_model">cookast.forecast.kpi.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- Server Action para abrir el kanban de KPIs (menú Previsiones) -->
+    <record id="action_cookast_forecast_kpi_server" model="ir.actions.server">
+        <field name="name">Previsiones – Dashboard KPI</field>
+        <field name="model_id" ref="model_cookast_forecast_kpi"/>
+        <field name="state">code</field>
+        <field name="code">
+# Regenerar KPIs con todos los datos (sin filtros por defecto) env['cookast.forecast.kpi']._refresh_kpis(domain=[])
+
+# Abrir la vista kanban de KPIs
+action = {
+    'name': 'Previsiones',
+    'type': 'ir.actions.act_window',
+    'res_model': 'cookast.forecast.kpi',
+    'view_mode': 'kanban',
+    'views': [(False, 'kanban')],
+    'target': 'current',
+    'context': {'create': False},
+}
+        </field>
+    </record>
+
+    <!-- Acción "Ver Detalle" – abre forecast list/graph/pivot -->
+    <record id="action_cookast_forecast_detail" model="ir.actions.act_window">
+        <field name="name">Detalle de Previsiones</field>
+        <field name="res_model">cookast.forecast</field>
+        <field name="view_mode">list,graph,pivot,form</field>
+        <field name="search_view_id" ref="view_cookast_forecast_search"/>
+    </record>
+
+    <!-- ══════  2. Vistas  ══════ -->
+
+    <!-- Kanban KPI (usa action_cookast_forecast_kpi_wizard en el control) -->
+    <record id="view_cookast_forecast_kpi_kanban" model="ir.ui.view">
+        <field name="name">cookast.forecast.kpi.kanban</field>
+        <field name="model">cookast.forecast.kpi</field>
+        <field name="priority">16</field>
+        <field name="arch" type="xml">
+            <kanban create="false" edit="false" delete="false" class="o_cookast_kpi_kanban">
+                <field name="kpi_type"/>
+                <field name="title"/>
+                <field name="subtitle"/>
+                <field name="value"/>
+                <field name="value_char"/>
+                <field name="icon"/>
+                <field name="color_class"/>
+
+                <control>
+                    <button string="🔄 Actualizar con filtros" type="action" name="%(cookast.action_cookast_forecast_kpi_wizard)d"/>
+                </control>
+
+                <templates>
+                    <t t-name="card">
+                        <div t-attf-class="o_kpi_card #{record.color_class.value}">
+                            <div class="o_kpi_icon">
+                                <i t-attf-class="fa #{record.icon.value} fa-2x"/>
+                            </div>
+                            <div class="o_kpi_body">
+                                <div class="o_kpi_value">
+                                    <t t-esc="record.value_char.value"/>
+                                </div>
+                                <div class="o_kpi_title">
+                                    <t t-esc="record.title.value"/>
+                                </div>
+                                <div class="o_kpi_subtitle">
+                                    <t t-esc="record.subtitle.value"/>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Search KPI (mínima) -->
+    <record id="view_cookast_forecast_kpi_search" model="ir.ui.view">
+        <field name="name">cookast.forecast.kpi.search</field>
+        <field name="model">cookast.forecast.kpi</field>
+        <field name="arch" type="xml">
+            <search string="KPIs de Previsión"/>
+        </field>
+    </record>
+
+    <!-- Wizard form (ya no necesita reorden, pero se coloca aquí) -->
+    <record id="view_cookast_forecast_kpi_wizard_form" model="ir.ui.view">
+        <field name="name">cookast.forecast.kpi.wizard.form</field>
+        <field name="model">cookast.forecast.kpi.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Filtrar Previsiones">
+                <sheet>
+                    <div class="oe_title">
+                        <h2>Filtrar datos del dashboard</h2>
+                        <p class="text-muted">
+                            Selecciona el rango de fechas y los locales para actualizar
+                            las 3 tarjetas KPI. Deja los locales vacíos para ver todos.
+                        </p>
+                    </div>
+                    <group>
+                        <group string="Rango de fechas">
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                        </group>
+                        <group string="Locales">
+                            <field name="local_ids" widget="many2many_tags" options="{'no_create': True}" placeholder="Todos los locales"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_apply_filters" type="object" string="Aplicar filtros" class="btn-primary"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- ══════  3. Menús  ══════ -->
+
+    <!-- Dashboard KPI -->
+    <menuitem id="menu_cookast_forecast_kpi" name="Dashboard KPIs" parent="menu_cookast_dashboard" action="action_cookast_forecast_kpi_server" sequence="5"/>
+
+    <!-- Vista completa de Previsiones (con gráficas) -->
+    <menuitem id="menu_cookast_forecast" name="Previsiones" parent="menu_cookast_dashboard" action="action_cookast_forecast_detail" sequence="10"/>
+
+    <menuitem id="menu_cookast_sync_log" name="Log de Sincronizaciones" parent="menu_cookast_dashboard" action="action_cookast_sync_log" sequence="20"/>
+
+</odoo>

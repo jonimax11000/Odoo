@@ -7,7 +7,11 @@
         <field name="arch" type="xml">
             <form string="Necesidad de personal">
                 <header>
-                    <button name="action_generate_shift_plans" type="object" string="Generar asignaciones" class="btn-primary"/>
+                    <button name="action_generate_shift_plans"
+                            type="object"
+                            string="Generar asignaciones"
+                            class="btn-primary"
+                            confirm="¿Generar asignaciones? El sistema aplicará criterios de equidad (ausencias, patrones de turno y carga de trabajo) para distribuir los turnos de forma justa."/>
                 </header>
                 <sheet>
                     <div class="oe_title">
@@ -15,15 +19,28 @@
                             <field name="display_name"/>
                         </h1>
                     </div>
+
+                    <div class="alert alert-info" role="alert" style="margin-bottom: 16px;">
+                        <strong>ℹ️ Sistema de equidad activo:</strong>
+                        Al generar asignaciones se excluyen automáticamente los empleados
+                        con ausencias/vacaciones aprobadas y se priorizan los que
+                        llevan menos turnos recientes del mismo día de la semana.
+                    </div>
+
                     <group>
                         <group>
                             <field name="forecast_id"/>
                             <field name="forecast_revenue" readonly="1"/>
                         </group>
                         <group>
-                            <field name="stress_level" widget="badge" decoration-success="stress_level == 'low'" decoration-warning="stress_level == 'medium'" decoration-danger="stress_level == 'high' or stress_level == 'critical'"/>
+                            <field name="stress_level"
+                                   widget="badge"
+                                   decoration-success="stress_level == 'low'"
+                                   decoration-warning="stress_level == 'medium'"
+                                   decoration-danger="stress_level == 'high' or stress_level == 'critical'"/>
                         </group>
                     </group>
+
                     <group string="Personal necesario">
                         <group>
                             <field name="total_persons"/>
@@ -34,9 +51,11 @@
                             <field name="junior_qty"/>
                         </group>
                     </group>
+
                     <group string="Coste estimado">
                         <field name="estimated_cost" readonly="1"/>
                     </group>
+
                     <separator string="Asignaciones generadas"/>
                     <field name="shift_plan_ids">
                         <list editable="bottom">
@@ -56,7 +75,9 @@
         <field name="name">cookast.staffing.need.list</field>
         <field name="model">cookast.staffing.need</field>
         <field name="arch" type="xml">
-            <list string="Necesidades de personal" decoration-warning="stress_level == 'high'" decoration-danger="stress_level == 'critical'">
+            <list string="Necesidades de personal"
+                  decoration-warning="stress_level == 'high'"
+                  decoration-danger="stress_level == 'critical'">
                 <field name="forecast_id"/>
                 <field name="date"/>
                 <field name="shift"/>
@@ -67,7 +88,11 @@
                 <field name="senior_qty"/>
                 <field name="junior_qty"/>
                 <field name="estimated_cost" sum="Coste Total"/>
-                <field name="stress_level" widget="badge" decoration-success="stress_level == 'low'" decoration-warning="stress_level == 'medium'" decoration-danger="stress_level == 'high' or stress_level == 'critical'"/>
+                <field name="stress_level"
+                       widget="badge"
+                       decoration-success="stress_level == 'low'"
+                       decoration-warning="stress_level == 'medium'"
+                       decoration-danger="stress_level == 'high' or stress_level == 'critical'"/>
             </list>
         </field>
     </record>
@@ -79,6 +104,17 @@
         <field name="view_mode">list,form</field>
     </record>
 
-    <!-- Menú -->
-    <menuitem id="menu_cookast_staffing_need" name="Necesidades de personal" parent="menu_cookast_personal" action="action_cookast_staffing_need" sequence="20"/>
+    <!-- Menú: Dashboard Personal -->
+    <menuitem id="menu_cookast_staffing_kpi"
+              name="Dashboard Personal"
+              parent="menu_cookast_personal"
+              action="action_cookast_staffing_kpi_server"
+              sequence="15"/>
+
+    <!-- Menú principal: Necesidades (con lista y formulario) -->
+    <menuitem id="menu_cookast_staffing_need"
+              name="Necesidades de personal"
+              parent="menu_cookast_personal"
+              action="action_cookast_staffing_need"
+              sequence="20"/>
 </odoo>

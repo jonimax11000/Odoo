@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates xml:space="preserve">
+    <!--
+        cookast_pos_stock_dialog.xml
+        Plantilla OWL para el diálogo de error de stock insuficiente en el TPV.
+        Se muestra cuando check_ingredients_availability devuelve ok=False.
+    -->
+    <t t-name="cookast.StockErrorDialog">
+        <Dialog title="props.title" size="'md'">
+            <t t-set-slot="default">
+                <div class="cookast-stock-error">
+                    <div class="cookast-stock-error__icon">
+                        <i class="fa fa-exclamation-triangle fa-3x text-danger"/>
+                    </div>
+                    <p class="cookast-stock-error__intro">
+                        No se puede completar la venta. Los siguientes
+                        ingredientes o productos no tienen stock suficiente:
+                    </p>
+                    <ul class="cookast-stock-error__list">
+                        <t t-foreach="props.message.split('\n')" t-as="line" t-key="line_index">
+                            <li t-if="line.trim()" class="cookast-stock-error__item">
+                                <t t-esc="line.trim().replace('• ', '')"/>
+                            </li>
+                        </t>
+                    </ul>
+                    <p class="cookast-stock-error__hint">
+                        <i class="fa fa-info-circle"/> Elimina los productos sin stock
+                        del pedido o contacta con el responsable para reabastecer.
+                    </p>
+                </div>
+            </t>
+            <t t-set-slot="footer">
+                <button class="btn btn-primary" t-on-click="props.close">
+                    Entendido
+                </button>
+            </t>
+        </Dialog>
+    </t>
+</templates>
