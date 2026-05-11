@@ -270,7 +270,17 @@ class CookastForecast(models.Model):
             day_factor = day_factor_map.get(weekday, 1.0)
             month_factor = month_factor_map.get(month, 1.0)
             
-            record.forecast_revenue = avg_revenue * day_factor * month_factor * config.trend_factor
+            # Factor meteorológico (soft dependency con cookast_weather)
+            weather_multiplier = 1.0
+            if self.env.get('cookast.weather.forecast'):
+                weather = self.env['cookast.weather.forecast'].search([
+                    ('local_id', '=', record.local_id.id),
+                    ('date', '=', record.date),
+                ], limit=1)
+                if weather:
+                    weather_multiplier = 1.0 + (weather.weather_factor / 100.0)
+
+            record.forecast_revenue = (avg_revenue * day_factor * month_factor * config.trend_factor) * weather_multiplier
 
     # ── Creación y Escritura ──────────────────────────────────────────────────
     @api.model_create_multi
