@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_shift_skill" model="ir.actions.act_window">
+        <field name="name">Skills</field>
+        <field name="res_model">shift.skill</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_shift_skill" name="Skills" parent="menu_shift_planning_config" action="action_shift_skill" sequence="20"/>
+
+    <record id="view_shift_skill_tree" model="ir.ui.view">
+        <field name="name">shift.skill.tree</field>
+        <field name="model">shift.skill</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="name"/>
+                <field name="color" widget="color_picker"/>
+            </list>
+        </field>
+    </record>
+</odoo>

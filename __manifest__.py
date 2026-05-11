@@ -1,0 +1,23 @@
+{
+    'name': 'Advanced Resource & Shift Planner',
+    'version': '19.0.1.0.0',
+    'category': 'Human Resources/Planning',
+    'summary': 'Advanced shift and resource planning with Gantt and Calendar for Community',
+    'author': 'Apunts Informática',
+    'license': 'LGPL-3',
+    'depends': ['base', 'hr', 'hr_holidays', 'project', 'web'],
+    'data': [
+        'security/planning_security.xml',
+        'security/ir.model.access.csv',
+        'views/hr_employee_views.xml',
+        'views/shift_planning_slot_views.xml',
+        'views/shift_template_views.xml',
+        'views/shift_skill_views.xml',
+        'wizard/shift_planning_wizard_views.xml',
+        'wizard/shift_auto_assign_wizard_views.xml',
+    ],
+    'demo': [],
+    'installable': True,
+    'application': True,
+    'auto_install': False,
+}

@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Action -->
+    <record id="action_shift_planning_slot" model="ir.actions.act_window">
+        <field name="name">Shift Planning</field>
+        <field name="res_model">shift.planning.slot</field>
+        <field name="view_mode">calendar,list,form,pivot,graph</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a new shift!
+            </p>
+        </field>
+    </record>
+
+    <record id="action_shift_planning_dashboard" model="ir.actions.act_window">
+        <field name="name">Planning Dashboard</field>
+        <field name="res_model">shift.planning.slot</field>
+        <field name="view_mode">pivot,graph</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No data for dashboard.
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu -->
+    <menuitem id="menu_shift_planning_root" name="Planning" sequence="50"/>
+    <menuitem id="menu_shift_planning_main" name="Schedule" parent="menu_shift_planning_root" sequence="10"/>
+    <menuitem id="menu_shift_planning_dashboard" name="Reporting" parent="menu_shift_planning_root" action="action_shift_planning_dashboard" sequence="90"/>
+    <menuitem id="menu_shift_planning_slots" name="Shifts" parent="menu_shift_planning_main" action="action_shift_planning_slot" sequence="10"/>
+
+    <!-- Views -->
+    <record id="view_shift_planning_slot_tree" model="ir.ui.view">
+        <field name="name">shift.planning.slot.tree</field>
+        <field name="model">shift.planning.slot</field>
+        <field name="arch" type="xml">
+            <list sample="1" decoration-danger="has_conflict == True">
+                <field name="name"/>
+                <field name="employee_id" widget="many2one_avatar_employee"/>
+                <field name="start_datetime"/>
+                <field name="end_datetime"/>
+                <field name="project_id" optional="show"/>
+                <field name="planned_hours" widget="float_time" sum="Total Hours"/>
+                <field name="has_conflict" invisible="1"/>
+                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'published'" decoration-warning="state == 'done'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_shift_planning_slot_form" model="ir.ui.view">
+        <field name="name">shift.planning.slot.form</field>
+        <field name="model">shift.planning.slot</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <field name="state" widget="statusbar" options="{'clickable': '1'}"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="e.g. Morning Shift"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="employee_id" widget="many2one_avatar_employee"/>
+                            <field name="job_id"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                        <group>
+                            <field name="start_datetime"/>
+                            <field name="end_datetime"/>
+                            <field name="planned_hours" widget="float_time"/>
+                            <field name="real_hours" widget="float_time"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="project_id"/>
+                            <field name="task_id"/>
+                        </group>
+                        <group>
+                            <field name="required_skill_ids" widget="many2many_tags" options="{'color_field': 'color'}"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_shift_planning_slot_calendar" model="ir.ui.view">
+        <field name="name">shift.planning.slot.calendar</field>
+        <field name="model">shift.planning.slot</field>
+        <field name="arch" type="xml">
+            <calendar date_start="start_datetime" date_stop="end_datetime" color="employee_id" event_open_popup="true">
+                <field name="name"/>
+                <field name="employee_id" avatar_field="avatar_128"/>
+                <field name="project_id"/>
+            </calendar>
+        </field>
+    </record>
+
+
+
+    <record id="view_shift_planning_slot_search" model="ir.ui.view">
+        <field name="name">shift.planning.slot.search</field>
+        <field name="model">shift.planning.slot</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="project_id"/>
+                <filter string="My Shifts" name="my_shifts" domain="[('employee_id.user_id', '=', uid)]"/>
+                <filter string="Draft" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Conflicts" name="conflicts" domain="[('has_conflict', '=', True)]"/>
+                <filter string="Unassigned" name="unassigned" domain="[('employee_id', '=', False)]"/>
+                <group>
+                    <filter string="Employee" name="group_by_employee" context="{'group_by': 'employee_id'}"/>
+                    <filter string="Project" name="group_by_project" context="{'group_by': 'project_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_shift_planning_slot_pivot" model="ir.ui.view">
+        <field name="name">shift.planning.slot.pivot</field>
+        <field name="model">shift.planning.slot</field>
+        <field name="arch" type="xml">
+            <pivot sample="1">
+                <field name="employee_id" type="row"/>
+                <field name="start_datetime" type="col" interval="month"/>
+                <field name="planned_hours" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+</odoo>

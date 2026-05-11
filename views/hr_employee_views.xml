@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_employee_form_inherit_shift_planner" model="ir.ui.view">
+        <field name="name">hr.employee.form.inherit.shift.planner</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='hr_settings']" position="inside">
+                <group string="Shift Planning" name="shift_planning">
+                    <field name="shift_max_weekly_hours"/>
+                    <field name="shift_skill_ids" widget="many2many_tags" options="{'color_field': 'color'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

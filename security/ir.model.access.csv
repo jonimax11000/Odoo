@@ -1,0 +1,9 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_shift_planning_slot_user,shift.planning.slot.user,model_shift_planning_slot,base.group_user,1,0,0,0
+access_shift_planning_slot_manager,shift.planning.slot.manager,model_shift_planning_slot,shift_planner_community.group_shift_planning_manager,1,1,1,1
+access_shift_template_user,shift.template.user,model_shift_template,base.group_user,1,0,0,0
+access_shift_template_manager,shift.template.manager,model_shift_template,shift_planner_community.group_shift_planning_manager,1,1,1,1
+access_shift_planning_wizard_manager,shift.planning.wizard.manager,model_shift_planning_wizard,shift_planner_community.group_shift_planning_manager,1,1,1,1
+access_shift_skill_user,shift.skill.user,model_shift_skill,base.group_user,1,0,0,0
+access_shift_skill_manager,shift.skill.manager,model_shift_skill,shift_planner_community.group_shift_planning_manager,1,1,1,1
+access_shift_auto_assign_wizard_manager,shift.auto.assign.wizard.manager,model_shift_auto_assign_wizard,shift_planner_community.group_shift_planning_manager,1,1,1,1
