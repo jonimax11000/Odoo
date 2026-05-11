@@ -104,6 +104,12 @@
                                 icon="fa-line-chart">
                             <field name="forecast_count" widget="statinfo" string="Previsiones"/>
                         </button>
+                        <button name="action_geocode"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-map-marker"
+                                string="Geolocalizar"
+                                help="Obtener coordenadas GPS desde la dirección"/>
                     </div>
 
                     <widget name="web_ribbon" title="Archivado" bg_color="bg-danger" invisible="active"/>
@@ -128,6 +134,8 @@
                             <field name="partner_id" placeholder="Dirección del local..."/>
                             <field name="street" invisible="not partner_id"/>
                             <field name="city" invisible="not partner_id"/>
+                            <field name="latitude" readonly="1"/>
+                            <field name="longitude" readonly="1"/>
                         </group>
                     </group>
 

@@ -8,6 +8,8 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
 import logging
+import requests
+import time
 
 _logger = logging.getLogger(__name__)
 
@@ -62,6 +64,10 @@ class CookastLocal(models.Model):
         help='Ubicación principal de inventario de este local. '
              'Deriva del almacén creado automáticamente.',
     )
+
+    # ── Geolocalización ───────────────────────────────────────────────────────
+    latitude = fields.Float(string='Latitud', digits=(9, 6))
+    longitude = fields.Float(string='Longitud', digits=(9, 6))
 
     # ── Personal ──────────────────────────────────────────────────────────────
     manager_id = fields.Many2one(
@@ -217,4 +223,63 @@ class CookastLocal(models.Model):
                 'inventory_mode': True,
                 'no_at_date': True,
             },
+        }
+
+    def action_geocode(self):
+        """
+        Obtiene las coordenadas GPS usando el servicio gratuito Nominatim (OSM).
+        Respeta la política de uso: 1 petición por segundo y User-Agent identificado.
+        """
+        for record in self:
+            if not record.partner_id:
+                continue
+
+            # Construir dirección
+            partner = record.partner_id
+            addr_parts = [
+                partner.street,
+                partner.city,
+                partner.zip,
+                partner.state_id.name,
+                partner.country_id.name or self.env.company.country_id.name
+            ]
+            address = ", ".join(filter(None, addr_parts))
+
+            if not address:
+                continue
+
+            # Nominatim API
+            url = f"https://nominatim.openstreetmap.org/search?q={address}&format=json&limit=1"
+            headers = {'User-Agent': 'CookastApp/1.0 info@cookast.local'}
+
+            try:
+                _logger.info("Geocoding local '%s': %s", record.name, address)
+                response = requests.get(url, headers=headers, timeout=10)
+                response.raise_for_status()
+                data = response.json()
+
+                if data:
+                    record.write({
+                        'latitude': float(data[0]['lat']),
+                        'longitude': float(data[0]['lon']),
+                    })
+                else:
+                    _logger.warning("No se encontraron resultados de geocoding para: %s", address)
+
+                # Respetar política de uso de Nominatim (1 req/sec) si hay varios registros
+                if len(self) > 1:
+                    time.sleep(1)
+
+            except Exception as e:
+                _logger.error("Error al geolocalizar local %s: %s", record.name, str(e))
+
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Geolocalización'),
+                'message': _('Proceso de geolocalización completado.'),
+                'type': 'success',
+                'sticky': False,
+            }
         }
