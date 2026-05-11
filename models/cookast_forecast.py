@@ -233,22 +233,26 @@ class CookastForecast(models.Model):
         Calcula forecast_revenue basado en:
         - Media de actual_revenue de los últimos N mismos días de la semana
         - Multiplicado por factor día, factor mes y tendencia general
+        - Ajustado por factor meteorológico (si cookast_weather está instalado)
         """
         config = self.env['cookast.forecast.config'].search([('active', '=', True)], limit=1)
         if not config:
             config = self.env['cookast.forecast.config'].create({'name': 'Configuración Forecast'})
-        
+
         day_factor_map = self._get_day_factor_map(config)
         month_factor_map = self._get_month_factor_map(config)
-        
+
+        # Detectar si el módulo cookast_weather está instalado (modelo registrado)
+        has_weather = 'cookast.weather.forecast' in self.env
+
         for record in self:
-            # Si ya tiene un valor manual (distinto de 0), no lo sobrescribimos
+            # Si ya tiene un valor manual y no se fuerza recálculo, no lo sobrescribimos
             if record.forecast_revenue > 0 and not self.env.context.get('force_recompute'):
                 continue
-            
+
             weekday = record.date.weekday()
             month = record.date.month
-            
+
             # Buscar histórico del mismo día de semana, mismo local y turno
             past_forecasts = self.search([
                 ('local_id', '=', record.local_id.id),
@@ -256,31 +260,52 @@ class CookastForecast(models.Model):
                 ('date', '<', record.date),
                 ('actual_revenue', '>', 0),
             ]).filtered(lambda f: f.date.weekday() == weekday)
-            
+
             # Limitar al número de semanas configurado
             past_forecasts = past_forecasts.sorted(key=lambda f: f.date, reverse=True)[:config.historical_weeks]
-            
+
             if past_forecasts:
                 avg_revenue = sum(past_forecasts.mapped('actual_revenue')) / len(past_forecasts)
             else:
-                # Si no hay histórico, usar valor base
                 avg_revenue = config.default_base_revenue
-            
-            # Aplicar factores
+
+            # Aplicar factores base
             day_factor = day_factor_map.get(weekday, 1.0)
             month_factor = month_factor_map.get(month, 1.0)
-            
-            # Factor meteorológico (soft dependency con cookast_weather)
+            base_forecast = avg_revenue * day_factor * month_factor * config.trend_factor
+
+            # ── Factor meteorológico (si el módulo cookast_weather está instalado) ──
             weather_multiplier = 1.0
-            if self.env.get('cookast.weather.forecast'):
-                weather = self.env['cookast.weather.forecast'].search([
+            weather_info = ""
+            if has_weather:
+                WeatherForecast = self.env['cookast.weather.forecast']
+                weather = WeatherForecast.search([
                     ('local_id', '=', record.local_id.id),
                     ('date', '=', record.date),
                 ], limit=1)
-                if weather:
-                    weather_multiplier = 1.0 + (weather.weather_factor / 100.0)
 
-            record.forecast_revenue = (avg_revenue * day_factor * month_factor * config.trend_factor) * weather_multiplier
+                if weather and weather.weather_factor:
+                    weather_multiplier = 1.0 + (weather.weather_factor / 100.0)
+                    weather_info = (
+                        f" | clima: {weather.weather_condition}"
+                        f" ({weather.temp_min:.0f}–{weather.temp_max:.0f}°C,"
+                        f" lluvia: {weather.rain_mm:.1f}mm)"
+                        f" → ajuste: {weather.weather_factor:+.1f}%"
+                    )
+                elif not weather:
+                    _logger.debug(
+                        "Sin previsión meteorológica para %s el %s. Se usa factor neutro (1.0).",
+                        record.local_id.name, record.date
+                    )
+
+            record.forecast_revenue = base_forecast * weather_multiplier
+
+            _logger.info(
+                "Forecast %s | %s | %s | base: %.0f€ × día:%.2f × mes:%.2f × tend:%.2f × clima:%.3f = %.0f€%s",
+                record.date, record.local_id.name, record.shift,
+                avg_revenue, day_factor, month_factor, config.trend_factor,
+                weather_multiplier, record.forecast_revenue, weather_info
+            )
 
     # ── Creación y Escritura ──────────────────────────────────────────────────
     @api.model_create_multi
@@ -303,10 +328,16 @@ class CookastForecast(models.Model):
         return records
     
     def write(self, vals):
-        """Al modificar fecha/local/turno, recalcular forecast si es necesario."""
+        """Al modificar fecha/local/turno/forecast_revenue, recalcular dependientes."""
         res = super().write(vals)
-        if any(f in vals for f in ['date', 'location_id', 'shift']):
-            self._compute_forecast_revenue()
+        if any(f in vals for f in ['date', 'location_id', 'shift', 'forecast_revenue']):
+            if 'forecast_revenue' in vals:
+                # Forzar recálculo del staffing_need asociado
+                for record in self:
+                    if record.staffing_need_id:
+                        record.staffing_need_id._compute_staffing()
+            else:
+                self._compute_forecast_revenue()
         return res
     
     # ── Acciones de Botón ─────────────────────────────────────────────────────
@@ -500,6 +531,49 @@ class CookastForecast(models.Model):
         except Exception as e:
             Log._log('cookast.forecast_sales', count, 'error', str(e))
             raise
+
+    def action_apply_weather_to_all_forecasts(self):
+        """
+        Aplica el factor meteorológico a todos los forecasts futuros que aún
+        no tengan previsión calculada, o fuerza el recálculo de todos.
+        Útil tras instalar cookast_weather o tras un cambio en los datos meteorológicos.
+        """
+        if 'cookast.weather.forecast' not in self.env:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Módulo no disponible'),
+                    'message': _('El módulo cookast_weather no está instalado.'),
+                    'type': 'warning',
+                }
+            }
+
+        # Buscar forecasts desde hoy en adelante
+        today = fields.Date.context_today(self)
+        forecasts = self.search([
+            ('date', '>=', today),
+        ])
+
+        if forecasts:
+            forecasts.with_context(force_recompute=True)._compute_forecast_revenue()
+            # También recalcular staffing needs asociados
+            staffing_needs = self.env['cookast.staffing.need'].search([
+                ('forecast_id', 'in', forecasts.ids),
+            ])
+            if staffing_needs:
+                staffing_needs._compute_staffing()
+
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Ajuste meteorológico aplicado'),
+                'message': _('Se han recalculado %d previsiones con los datos meteorológicos actuales.') % len(forecasts),
+                'type': 'success',
+            }
+        }
+            
 
 
 class SaleOrder(models.Model):
