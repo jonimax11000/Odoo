@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from odoo import models, fields
+from odoo import models, fields, api
 
 
 class HrEmployee(models.Model):
@@ -56,3 +56,38 @@ class HrEmployee(models.Model):
         'employee_id',
         string='Turnos planificados',
     )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        employees = super().create(vals_list)
+        employees._sync_cookast_level_skills()
+        return employees
+
+    def write(self, vals):
+        res = super().write(vals)
+        if 'cookast_level' in vals:
+            self._sync_cookast_level_skills()
+        return res
+
+    def _sync_cookast_level_skills(self):
+        Skill = self.env['shift.skill'].sudo()
+        mapping = {
+            'responsible': 'Responsable',
+            'senior': 'Senior',
+            'junior': 'Junior',
+        }
+        for emp in self:
+            if not emp.cookast_level:
+                continue
+                
+            skill_name = mapping.get(emp.cookast_level)
+            if not skill_name:
+                continue
+                
+            skill = Skill.search([('name', '=', skill_name)], limit=1)
+            if not skill:
+                skill = Skill.create({'name': skill_name})
+                
+            # Keep existing skills, just add the new one
+            if skill.id not in emp.shift_skill_ids.ids:
+                emp.shift_skill_ids = [(4, skill.id)]

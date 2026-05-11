@@ -9,7 +9,7 @@
         <field name="name">cookast.forecast.graph</field>
         <field name="model">cookast.forecast</field>
         <field name="arch" type="xml">
-            <graph string="Previsión vs Real" type="bar" stacked="False">
+            <graph type="bar" stacked="False">
                 <!-- Eje X: agrupado por fecha (día). El usuario puede
                      cambiar a semana/mes desde el menú de la vista. -->
                 <field name="date" type="row" interval="day"/>
@@ -31,7 +31,7 @@
         <field name="name">cookast.forecast.pivot</field>
         <field name="model">cookast.forecast</field>
         <field name="arch" type="xml">
-            <pivot string="Previsiones detalladas">
+            <pivot>
                 <field name="date" type="row"/>
                 <field name="shift" type="row"/>
                 <!-- Columnas: un bloque por local activo en Cookast.
@@ -51,7 +51,7 @@
         <field name="name">cookast.forecast.list</field>
         <field name="model">cookast.forecast</field>
         <field name="arch" type="xml">
-            <list string="Previsiones" decoration-danger="actual_revenue &gt; forecast_revenue">
+            <list decoration-danger="actual_revenue &gt; forecast_revenue">
                 <field name="date"/>
                 <field name="local_id"/>
                 <field name="shift"/>
@@ -68,11 +68,18 @@
         <field name="name">cookast.forecast.form</field>
         <field name="model">cookast.forecast</field>
         <field name="arch" type="xml">
-            <form string="Previsión de turno">
+            <form>
                 <header>
                     <button name="action_generate_shift_plans" type="object" string="Generar asignaciones" class="btn-primary" confirm="¿Generar asignaciones de personal para este turno?"/>
                 </header>
                 <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_planning_slots" type="object" class="oe_stat_button" icon="fa-calendar">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Turnos</span>
+                            </div>
+                        </button>
+                    </div>
                     <group>
                         <group>
                             <field name="date"/>
@@ -108,14 +115,7 @@
                                     <field name="stress_level" widget="badge" decoration-success="stress_level == 'low'" decoration-warning="stress_level == 'medium'" decoration-danger="stress_level == 'high' or stress_level == 'critical'"/>
                                 </group>
                                 <separator string="Asignaciones generadas"/>
-                                <field name="shift_plan_ids">
-                                    <list editable="bottom">
-                                        <field name="employee_id"/>
-                                        <field name="role"/>
-                                        <field name="planned_hours"/>
-                                        <field name="shift_cost"/>
-                                    </list>
-                                </field>
+                                <field name="planning_slot_ids" context="{'tree_view_ref': 'shift_planner_community.view_shift_planning_slot_tree'}"/>
                             </form>
                         </field>
                     </group>
@@ -142,7 +142,7 @@
         <field name="name">cookast.forecast.search</field>
         <field name="model">cookast.forecast</field>
         <field name="arch" type="xml">
-            <search string="Buscar previsiones">
+            <search>
                 <field name="date"/>
                 <field name="local_id"/>
 
@@ -197,7 +197,7 @@
         <field name="name">cookast.sync.log.list</field>
         <field name="model">cookast.sync.log</field>
         <field name="arch" type="xml">
-            <list string="Log de sincronizaciones" decoration-danger="status=='error'">
+            <list decoration-danger="status=='error'">
                 <field name="sync_date"/>
                 <field name="model_synced"/>
                 <field name="records_processed"/>

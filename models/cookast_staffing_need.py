@@ -74,6 +74,10 @@ class CookastStaffingNeed(models.Model):
     ], string='Nivel de tensión', compute='_compute_stress_level', store=True)
 
     # ── Planificaciones generadas ─────────────────────────────────────────────
+    planning_slot_ids = fields.One2many(
+        related='forecast_id.planning_slot_ids',
+        readonly=False,
+    )
     shift_plan_ids = fields.One2many(
         'cookast.shift.plan',
         'staffing_need_id',
@@ -181,10 +185,10 @@ class CookastStaffingNeed(models.Model):
         para los empleados indicados, en la semana ISO de ref_date.
         """
         monday, sunday = self._get_week_bounds(ref_date)
-        plans = self.env['cookast.shift.plan'].search([
+        plans = self.env['shift.planning.slot'].search([
             ('employee_id', 'in', employee_ids),
-            ('date', '>=', monday),
-            ('date', '<=', sunday),
+            ('start_datetime', '>=', monday),
+            ('start_datetime', '<=', sunday),
         ])
         hours_map = {}
         for plan in plans:
@@ -245,14 +249,6 @@ class CookastStaffingNeed(models.Model):
         """
         Calcula una puntuación de equidad para cada empleado.
         Menor puntuación = más prioritario para asignar.
-
-        Criterios (todos suman penalización, no la restan):
-          1. Repetición del mismo turno en el mismo día de la semana
-             (ej: cuántos martes de noche ha trabajado en las últimas 6 semanas)
-          2. Días consecutivos trabajados antes de target_date
-          3. Carga total de turnos en las últimas N semanas vs colegas del mismo nivel
-
-        Returns: dict {employee_id: score}
         """
         if not employees:
             return {}
@@ -263,10 +259,10 @@ class CookastStaffingNeed(models.Model):
         weekday = today.weekday()  # 0=lunes, 6=domingo
 
         # ── Obtener todos los turnos históricos relevantes en una sola query ──
-        past_plans = self.env['cookast.shift.plan'].search([
+        past_plans = self.env['shift.planning.slot'].search([
             ('employee_id', 'in', employee_ids),
-            ('date', '>=', lookback_start),
-            ('date', '<', today),
+            ('start_datetime', '>=', lookback_start),
+            ('start_datetime', '<', today),
         ])
 
         # Indexar por empleado
@@ -284,14 +280,19 @@ class CookastStaffingNeed(models.Model):
             score = 0.0
 
             # ── Criterio 1: repetición mismo día-semana + mismo turno ──────
+            def check_shift(p):
+                if getattr(p, 'cookast_forecast_id', False):
+                    return p.cookast_forecast_id.shift == shift
+                return ('lunch' if p.start_datetime.hour < 17 else 'dinner') == shift
+
             same_weekday_same_shift = sum(
                 1 for p in emp_plans
-                if p.date.weekday() == weekday and p.shift == shift
+                if p.start_datetime.date().weekday() == weekday and check_shift(p)
             )
             score += same_weekday_same_shift * self._PENALTY_SAME_WEEKDAY_SHIFT
 
             # ── Criterio 2: días consecutivos justo antes de target_date ───
-            worked_dates = sorted({p.date for p in emp_plans}, reverse=True)
+            worked_dates = sorted({p.start_datetime.date() for p in emp_plans}, reverse=True)
             consecutive = 0
             check_date = today - timedelta(days=1)
             for d in worked_dates:
@@ -328,156 +329,125 @@ class CookastStaffingNeed(models.Model):
 
     def action_generate_shift_plans(self):
         """
-        Genera registros en cookast.shift.plan asignando empleados disponibles
-        según el nivel necesario (R/S/J).
-
-        Filtros aplicados (en orden):
-          1. Solo empleados del local de la previsión
-          2. Sin ausencias/vacaciones aprobadas ese día (hr.leave)
-          3. Sin turno ya asignado en ese mismo día + turno
-          4. Con capacidad semanal de horas suficiente
-          5. Ordenados por puntuación de equidad (menor = más prioritario):
-             - Penalización si repite el mismo día de semana + turno
-             - Penalización por días consecutivos trabajados
-             - Penalización por carga global alta en las últimas 6 semanas
+        Genera registros en shift.planning.slot (huecos sin asignar)
+        según la cantidad de personal necesario por nivel.
         """
         self.ensure_one()
 
+        Skill = self.env['shift.skill'].sudo()
+        skill_resp = Skill.search([('name', '=', 'Responsable')], limit=1)
+        if not skill_resp:
+            skill_resp = Skill.create({'name': 'Responsable', 'color': 2})
+            
+        skill_senior = Skill.search([('name', '=', 'Senior')], limit=1)
+        if not skill_senior:
+            skill_senior = Skill.create({'name': 'Senior', 'color': 4})
+            
+        skill_junior = Skill.search([('name', '=', 'Junior')], limit=1)
+        if not skill_junior:
+            skill_junior = Skill.create({'name': 'Junior', 'color': 6})
+            
+        import pytz
+        from datetime import datetime, time
+
+        user_tz = pytz.timezone(self.env.user.tz or 'UTC')
         forecast_date = self.forecast_id.date
-        forecast_shift = self.forecast_id.shift
-        shift_hours = 5.0  # Horas estándar por turno
-
-        # ── 1) Limpiar asignaciones previas ──────────────────────────────────
-        self.shift_plan_ids.unlink()
-
-        # ── 2) Empleados ausentes ese día (vacaciones, bajas, etc.) ──────────
+        shift_type = self.forecast_id.shift
+        
+        if shift_type == 'lunch':
+            start_hour, end_hour = 11, 16
+        else:
+            start_hour, end_hour = 19, 24
+            
+        start_dt_local = user_tz.localize(datetime.combine(forecast_date, time(start_hour, 0)))
+        start_dt_utc = start_dt_local.astimezone(pytz.UTC).replace(tzinfo=None)
+        
+        if end_hour == 24:
+            end_dt_local = user_tz.localize(datetime.combine(forecast_date, time(23, 59, 59)))
+        else:
+            end_dt_local = user_tz.localize(datetime.combine(forecast_date, time(end_hour, 0)))
+        end_dt_utc = end_dt_local.astimezone(pytz.UTC).replace(tzinfo=None)
+        
+        # 1. Clean previous slots from this staffing need
+        self.env['shift.planning.slot'].search([('cookast_forecast_id', '=', self.forecast_id.id)]).unlink()
+        
+        # 2. Get absent and busy employees
         absent_ids = self._get_absent_employee_ids(forecast_date)
-        if absent_ids:
-            _logger.info(
-                'Staffing %s: %d empleados ausentes excluidos el %s',
-                self.display_name, len(absent_ids), forecast_date
-            )
-
-        # ── 3) Empleados ya con turno asignado ese mismo día + turno ─────────
-        busy_employee_ids = set(self.env['cookast.shift.plan'].search([
-            ('date', '=', forecast_date),
-            ('shift', '=', forecast_shift),
+        
+        busy_employee_ids = set(self.env['shift.planning.slot'].search([
+            ('start_datetime', '<', end_dt_utc),
+            ('end_datetime', '>', start_dt_utc),
         ]).mapped('employee_id.id'))
-
-        # ── 4) IDs excluidos totales ──────────────────────────────────────────
+        
         excluded_ids = list(absent_ids | busy_employee_ids)
 
-        # ── 5) Candidatos filtrados por local ─────────────────────────────────
+        # 3. Get candidates
         local = self.forecast_id.local_id
+        if local:
+            local.employee_ids._sync_cookast_level_skills()
         local_employee_ids = local.employee_ids.ids if local else []
 
-        base_domain = [
+        employees_resp = self.env['hr.employee'].search([
             ('id', 'not in', excluded_ids),
             ('id', 'in', local_employee_ids),
-        ]
-
-        employees_resp = self.env['hr.employee'].search(
-            base_domain + [('cookast_level', '=', 'responsible')]
-        )
-        employees_senior = self.env['hr.employee'].search(
-            base_domain + [('cookast_level', '=', 'senior')]
-        )
-        employees_junior = self.env['hr.employee'].search(
-            base_domain + [('cookast_level', '=', 'junior')]
-        )
-
-        # ── 6) Filtrar por capacidad semanal de horas ─────────────────────────
+            ('shift_skill_ids', 'in', skill_resp.ids)
+        ])
+        
+        employees_senior = self.env['hr.employee'].search([
+            ('id', 'not in', excluded_ids),
+            ('id', 'in', local_employee_ids),
+            ('shift_skill_ids', 'in', skill_senior.ids),
+            ('id', 'not in', employees_resp.ids)
+        ])
+        
+        employees_junior = self.env['hr.employee'].search([
+            ('id', 'not in', excluded_ids),
+            ('id', 'in', local_employee_ids),
+            ('shift_skill_ids', 'in', skill_junior.ids),
+            ('id', 'not in', (employees_resp | employees_senior).ids)
+        ])
+        
+        # 4. Filter by weekly capacity
         all_candidate_ids = (employees_resp | employees_senior | employees_junior).ids
         hours_map = self._get_weekly_hours_map(all_candidate_ids, forecast_date)
+        shift_hours = (end_dt_utc - start_dt_utc).total_seconds() / 3600.0
 
-        employees_resp = self._filter_by_weekly_capacity(
-            employees_resp, hours_map, shift_hours
-        )
-        employees_senior = self._filter_by_weekly_capacity(
-            employees_senior, hours_map, shift_hours
-        )
-        employees_junior = self._filter_by_weekly_capacity(
-            employees_junior, hours_map, shift_hours
-        )
+        employees_resp = self._filter_by_weekly_capacity(employees_resp, hours_map, shift_hours)
+        employees_senior = self._filter_by_weekly_capacity(employees_senior, hours_map, shift_hours)
+        employees_junior = self._filter_by_weekly_capacity(employees_junior, hours_map, shift_hours)
 
-        # ── 7) Ordenar por equidad ────────────────────────────────────────────
-        employees_resp = self._sort_by_fairness(employees_resp, forecast_date, forecast_shift)
-        employees_senior = self._sort_by_fairness(employees_senior, forecast_date, forecast_shift)
-        employees_junior = self._sort_by_fairness(employees_junior, forecast_date, forecast_shift)
+        # 5. Sort by fairness
+        sorted_resp = list(self._sort_by_fairness(employees_resp, forecast_date, shift_type))
+        sorted_senior = list(self._sort_by_fairness(employees_senior, forecast_date, shift_type))
+        sorted_junior = list(self._sort_by_fairness(employees_junior, forecast_date, shift_type))
+        
+        Slot = self.env['shift.planning.slot']
+        slots_to_create = []
+        company_id = self.env.company.id
+        
+        def _add_slots(qty, skill, role_name, candidate_list):
+            for i in range(qty):
+                emp_id = False
+                if candidate_list:
+                    emp = candidate_list.pop(0)
+                    emp_id = emp.id
+                    
+                slots_to_create.append({
+                    'name': f'Turno {self.forecast_id.shift} - {role_name}',
+                    'employee_id': emp_id,
+                    'start_datetime': start_dt_utc,
+                    'end_datetime': end_dt_utc,
+                    'company_id': company_id,
+                    'cookast_forecast_id': self.forecast_id.id,
+                    'required_skill_ids': [(4, skill.id)],
+                    'state': 'published',
+                })
 
-        # ── 8) Asignar empleados ──────────────────────────────────────────────
-        assigned_employees = set()
+        _add_slots(self.responsible_qty, skill_resp, 'Responsable', sorted_resp)
+        _add_slots(self.senior_qty, skill_senior, 'Senior', sorted_senior)
+        _add_slots(self.junior_qty, skill_junior, 'Junior', sorted_junior)
+        
+        if slots_to_create:
+            Slot.create(slots_to_create)
 
-        def _assign(pool, qty, role):
-            """Asigna hasta qty empleados del pool con el rol indicado."""
-            for _i in range(qty):
-                available = pool.filtered(lambda e: e.id not in assigned_employees)
-                if available:
-                    employee = available[0]
-                    assigned_employees.add(employee.id)
-                    hours_map[employee.id] = (
-                        hours_map.get(employee.id, 0.0) + shift_hours
-                    )
-                    self.env['cookast.shift.plan'].create({
-                        'forecast_id': self.forecast_id.id,
-                        'staffing_need_id': self.id,
-                        'employee_id': employee.id,
-                        'role': role,
-                        'planned_hours': shift_hours,
-                    })
-
-        _assign(employees_resp, self.responsible_qty, 'chef')
-        _assign(employees_senior, self.senior_qty, 'waiter')
-        _assign(employees_junior, self.junior_qty, 'runner')
-
-        # ── 9) Resultado ──────────────────────────────────────────────────────
-        total_needed = self.responsible_qty + self.senior_qty + self.junior_qty
-        total_assigned = len(assigned_employees)
-
-        self.invalidate_recordset(['shift_plan_ids'])
-
-        if total_assigned < total_needed:
-            # Calcular detalles del motivo de falta de personal
-            missing = total_needed - total_assigned
-            reasons = []
-            if absent_ids:
-                reasons.append(_('%d ausente(s) por vacaciones/baja') % len(absent_ids))
-            if busy_employee_ids:
-                reasons.append(_('%d ya asignado(s) a otro turno') % len(busy_employee_ids))
-
-            detail = (', '.join(reasons)) if reasons else _('sin empleados disponibles')
-
-            message = _(
-                'Solo se pudieron asignar %(assigned)d de %(needed)d empleados '
-                '(faltan %(missing)d). Motivos: %(detail)s.'
-            ) % {
-                'assigned': total_assigned,
-                'needed': total_needed,
-                'missing': missing,
-                'detail': detail,
-            }
-            return {
-                'type': 'ir.actions.client',
-                'tag': 'display_notification',
-                'params': {
-                    'title': _('Asignación incompleta'),
-                    'message': message,
-                    'type': 'warning',
-                    'sticky': True,
-                    'next': {
-                        'type': 'ir.actions.act_window',
-                        'res_model': 'cookast.staffing.need',
-                        'res_id': self.id,
-                        'view_mode': 'form',
-                        'target': 'current',
-                    },
-                },
-            }
-
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'cookast.staffing.need',
-            'res_id': self.id,
-            'view_mode': 'form',
-            'target': 'current',
-        }
+        return True

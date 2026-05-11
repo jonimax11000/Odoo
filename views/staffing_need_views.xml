@@ -5,7 +5,7 @@
         <field name="name">cookast.staffing.need.form</field>
         <field name="model">cookast.staffing.need</field>
         <field name="arch" type="xml">
-            <form string="Necesidad de personal">
+            <form>
                 <header>
                     <button name="action_generate_shift_plans" type="object" string="Generar asignaciones" class="btn-primary" confirm="¿Generar asignaciones? El sistema aplicará criterios de equidad (ausencias, patrones de turno y carga de trabajo) para distribuir los turnos de forma justa."/>
                 </header>
@@ -49,14 +49,7 @@
                     </group>
 
                     <separator string="Asignaciones generadas"/>
-                    <field name="shift_plan_ids">
-                        <list editable="bottom">
-                            <field name="employee_id"/>
-                            <field name="role"/>
-                            <field name="planned_hours"/>
-                            <field name="shift_cost"/>
-                        </list>
-                    </field>
+                    <field name="planning_slot_ids" context="{'tree_view_ref': 'shift_planner_community.view_shift_planning_slot_tree'}"/>
                 </sheet>
             </form>
         </field>
@@ -67,7 +60,7 @@
         <field name="name">cookast.staffing.need.list</field>
         <field name="model">cookast.staffing.need</field>
         <field name="arch" type="xml">
-            <list string="Necesidades de personal" decoration-warning="stress_level == 'high'" decoration-danger="stress_level == 'critical'">
+            <list decoration-warning="stress_level == 'high'" decoration-danger="stress_level == 'critical'">
                 <field name="forecast_id"/>
                 <field name="date"/>
                 <field name="shift"/>

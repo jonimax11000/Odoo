@@ -101,12 +101,16 @@ class CookastForecast(models.Model):
         string='Pedidos de Venta',
     )
 
-    # ── Relación One2one con Staffing Need ────────────────────────────────────
+    # ── Relación con necesidades de personal y planificador ──────────────────
     staffing_need_id = fields.Many2one(
         'cookast.staffing.need',
         string='Necesidad de personal',
-        ondelete='restrict',
-        readonly=False,
+        readonly=True,
+    )
+    planning_slot_ids = fields.One2many(
+        'shift.planning.slot',
+        'cookast_forecast_id',
+        string='Turnos Planificados'
     )
 
     shift_plan_ids = fields.One2many(
@@ -347,6 +351,25 @@ class CookastForecast(models.Model):
             'view_mode': 'form',
             'target': 'current',
         }
+
+    def action_view_planning_slots(self):
+        self.ensure_one()
+        import pytz
+        from datetime import datetime, time
+        user_tz = pytz.timezone(self.env.user.tz or 'UTC')
+        start_of_day = user_tz.localize(datetime.combine(self.date, time.min)).astimezone(pytz.UTC).replace(tzinfo=None)
+        end_of_day = user_tz.localize(datetime.combine(self.date, time.max)).astimezone(pytz.UTC).replace(tzinfo=None)
+
+        action = self.env['ir.actions.act_window']._for_xml_id('shift_planner_community.action_shift_planning_slot')
+        action['domain'] = [
+            ('start_datetime', '>=', start_of_day),
+            ('start_datetime', '<=', end_of_day),
+            ('cookast_local_id', '=', self.local_id.id)
+        ]
+        action['context'] = {
+            'default_cookast_forecast_id': self.id,
+        }
+        return action
 
     # ── Sincronización POS ────────────────────────────────────────────────────
     @api.model

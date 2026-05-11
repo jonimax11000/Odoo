@@ -16,6 +16,7 @@
         'hr_holidays',
         'stock',
         'mrp',
+        'shift_planner_community',
     ],
     'data': [
         'security/ir.model.access.csv',
