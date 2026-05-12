@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_cookast_sync_log" model="ir.actions.report">
+        <field name="name">Log de Sincronizaciones</field>
+        <field name="model">cookast.sync.log</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">cookast.report_cookast_sync_log</field>
+        <field name="report_file">cookast.report_cookast_sync_log</field>
+        <field name="binding_model_id" ref="model_cookast_sync_log"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_cookast_sync_log">
+        <t t-call="web.html_container">
+            <t t-set="total_processed" t-value="sum(docs.mapped('records_processed'))"/>
+            <t t-set="total_errors" t-value="len(docs.filtered(lambda r: r.status == 'error'))"/>
+
+            <t t-foreach="docs" t-as="log">
+                <div class="page">
+                    <meta charset="UTF-8"/>
+                    <t t-call="cookast.cookast_report_styles"/>
+
+                    <div class="header">
+                        <img src="/cookast/static/description/icon.png" alt="Cookast" height="40"/>
+                        <h1>Registro de Sincronización</h1>
+                        <p>Fecha de emisión: <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y %H:%M')"/>
+                        </p>
+                    </div>
+
+                    <h2>
+                        <t t-esc="log.sync_date.strftime('%d/%m/%Y %H:%M:%S')"/>
+                    </h2>
+
+                    <table class="table table-bordered">
+                        <tr>
+                            <th style="width:35%">Fecha de sincronización</th>
+                            <td>
+                                <t t-esc="log.sync_date.strftime('%d/%m/%Y %H:%M:%S')"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Modelo sincronizado</th>
+                            <td>
+                                <t t-esc="log.model_synced"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Registros procesados</th>
+                            <td>
+                                <t t-esc="log.records_processed"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Estado</th>
+                            <td>
+                                <t t-if="log.status == 'success'">
+                                    <span class="badge badge-success">Éxito</span>
+                                </t>
+                                <t t-elif="log.status == 'error'">
+                                    <span class="badge badge-danger">Error</span>
+                                </t>
+                            </td>
+                        </tr>
+                        <t t-if="log.error_message">
+                            <tr>
+                                <th>Mensaje de error</th>
+                                <td class="text-danger">
+                                    <t t-esc="log.error_message"/>
+                                </td>
+                            </tr>
+                        </t>
+                    </table>
+
+                    <div class="footer text-muted" style="margin-top: 20px; font-size: 0.85rem;">
+                        Cookast — Log de Sincronizaciones · Página <span class="page"/>
+ · Generado el <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y a las %H:%M')"/>
+                </div>
+            </div>
+        </t>
+
+        <!-- Resumen si hay más de un registro -->
+        <t t-if="len(docs) &gt; 1">
+            <div class="page">
+                <meta charset="UTF-8"/>
+                <t t-call="cookast.cookast_report_styles"/>
+                <h1>Resumen de Sincronizaciones</h1>
+                <p>Total de registros de log: <t t-esc="len(docs)"/>
+                </p>
+                <table class="table table-bordered">
+                    <tr>
+                        <th style="width:40%">Total de registros procesados</th>
+                        <td class="text-right">
+                            <t t-esc="total_processed"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Sincronizaciones con error</th>
+                        <td class="text-right">
+                            <t t-esc="total_errors"/>
+                        </td>
+                    </tr>
+                </table>
+                <div class="footer text-muted">Cookast — Resumen · Generado el <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y a las %H:%M')"/>
+                </div>
+            </div>
+        </t>
+    </t>
+</template>
+</odoo>

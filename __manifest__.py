@@ -57,6 +57,7 @@
         'reports/cookast_material_need_report.xml',
         'reports/cookast_bom_report.xml',
         'reports/cookast_employee_report.xml',
+        'reports/cookast_sync_log_report.xml',
     ],
     'assets': {
         'web.assets_backend': [
