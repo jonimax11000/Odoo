@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_planning_slot" model="ir.actions.report">
+        <field name="name">Planificación de Turnos</field>
+        <field name="model">shift.planning.slot</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">shift_planner_community.report_planning_slot</field>
+        <field name="report_file">shift_planner_community.report_planning_slot</field>
+        <field name="binding_model_id" ref="model_shift_planning_slot"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- Estilos básicos (no dependen de cookast) -->
+    <template id="report_planning_slot_styles">
+        <style>
+            * {
+                font-family: sans-serif;
+            }
+            body {
+                font-size: 11pt;
+                color: #333;
+                line-height: 1.4;
+            }
+            .page {
+                padding: 30px 35px;
+            }
+            .header {
+                border-bottom: 3px solid #71639e;
+                margin-bottom: 20px;
+                padding-bottom: 15px;
+            }
+            .header h1 {
+                font-size: 1.5rem;
+                color: #71639e;
+                margin: 0;
+                padding-top: 5px;
+                font-weight: 600;
+            }
+            .header p {
+                margin: 5px 0 0 0;
+                color: #888;
+                font-size: 0.85rem;
+            }
+            h2 {
+                font-size: 1.15rem;
+                color: #71639e;
+                border-bottom: 1px solid #ddd;
+                padding-bottom: 5px;
+                margin-top: 20px;
+                margin-bottom: 10px;
+                clear: both;
+                font-weight: 600;
+            }
+            .table {
+                width: 100%;
+                margin-bottom: 12px;
+                border-collapse: collapse;
+                font-size: 10pt;
+            }
+            .table th, .table td {
+                padding: 6px 10px;
+                border: 1px solid #ddd;
+                text-align: left;
+                vertical-align: top;
+            }
+            .table th {
+                background-color: #f7f7f7;
+                font-weight: 600;
+                color: #555;
+            }
+            .text-right { text-align: right; }
+            .text-muted { color: #999; }
+            .badge {
+                display: inline-block;
+                padding: 2px 8px;
+                border-radius: 10px;
+                font-size: 9pt;
+                font-weight: bold;
+            }
+            .badge-success { background: #d4edda; color: #155724; }
+            .badge-warning { background: #fff3cd; color: #856404; }
+            .footer {
+                border-top: 1px solid #ddd;
+                padding-top: 10px;
+                text-align: right;
+                margin-top: 30px;
+                font-size: 0.85rem;
+            }
+        </style>
+    </template>
+
+    <template id="report_planning_slot">
+        <t t-call="web.html_container">
+            <t t-set="total_hours" t-value="0.0"/>
+            <t t-foreach="docs" t-as="slot">
+                <t t-set="duration" t-value="(slot.end_datetime - slot.start_datetime).total_seconds() / 3600.0"/>
+                <t t-set="total_hours" t-value="total_hours + duration"/>
+            </t>
+
+            <t t-foreach="docs" t-as="slot">
+                <div class="page">
+                    <meta charset="UTF-8"/>
+                    <t t-call="shift_planner_community.report_planning_slot_styles"/>
+
+                    <div class="header">
+                        <h1>Turno Planificado</h1>
+                        <p>Fecha de emisión: <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y %H:%M')"/>
+                        </p>
+                    </div>
+
+                    <h2>
+                        <t t-esc="slot.start_datetime.strftime('%d/%m/%Y')"/>
+ ·
+                        <t t-esc="slot.employee_id.name or 'Sin asignar'"/>
+                    </h2>
+
+                    <table class="table table-bordered">
+                        <tr>
+                            <th style="width:35%">Empleado</th>
+                            <td>
+                                <t t-esc="slot.employee_id.name or 'Sin asignar'"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Inicio</th>
+                            <td>
+                                <t t-esc="slot.start_datetime.strftime('%d/%m/%Y %H:%M')"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Fin</th>
+                            <td>
+                                <t t-esc="slot.end_datetime.strftime('%d/%m/%Y %H:%M')"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Duración</th>
+                            <td>
+                                <t t-esc="'%.1f' % duration"/>
+ horas</td>
+                        </tr>
+                        <tr>
+                            <th>Habilidades requeridas</th>
+                            <td>
+                                <t t-esc="', '.join(slot.required_skill_ids.mapped('name')) or '—'"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Local</th>
+                            <td>
+                                <t t-esc="slot.cookast_local_id.name or '—'"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Previsión vinculada</th>
+                            <td>
+                                <t t-if="slot.cookast_forecast_id">
+                                    <t t-esc="slot.cookast_forecast_id.display_name"/>
+                                </t>
+                                <t t-else="">—</t>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Estado</th>
+                            <td>
+                                <t t-if="slot.state == 'published'">
+                                    <span class="badge badge-success">Publicado</span>
+                                </t>
+                                <t t-elif="slot.state == 'draft'">
+                                    <span class="badge badge-warning">Borrador</span>
+                                </t>
+                                <t t-else="">
+                                    <t t-esc="slot.state"/>
+                                </t>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <div class="footer text-muted" style="margin-top: 20px; font-size: 0.85rem;">
+                        Shift Planner — Planificación de Turnos · Página <span class="page"/>
+ · Generado el <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y a las %H:%M')"/>
+                </div>
+            </div>
+        </t>
+
+        <t t-if="len(docs) &gt; 1">
+            <div class="page">
+                <meta charset="UTF-8"/>
+                <t t-call="shift_planner_community.report_planning_slot_styles"/>
+                <h1>Resumen de Turnos Planificados</h1>
+                <p>Total de turnos: <t t-esc="len(docs)"/>
+                </p>
+                <table class="table table-bordered">
+                    <tr>
+                        <th style="width:40%">Horas Totales Planificadas</th>
+                        <td class="text-right">
+                            <t t-esc="'%.1f' % total_hours"/>
+ horas</td>
+                    </tr>
+                    <tr>
+                        <th>Media de horas por turno</th>
+                        <td class="text-right">
+                            <t t-esc="'%.1f' % (total_hours / len(docs))"/>
+ horas</td>
+                    </tr>
+                </table>
+                <div class="footer text-muted">Shift Planner — Resumen · Generado el <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y a las %H:%M')"/>
+                </div>
+            </div>
+        </t>
+    </t>
+</template>
+</odoo>

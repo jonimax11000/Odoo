@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_shift_template" model="ir.actions.report">
+        <field name="name">Plantillas de Turno</field>
+        <field name="model">shift.template</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">shift_planner_community.report_shift_template</field>
+        <field name="report_file">shift_planner_community.report_shift_template</field>
+        <field name="binding_model_id" ref="model_shift_template"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- Estilos propios -->
+    <template id="report_shift_template_styles">
+        <style>
+            * { font-family: sans-serif; }
+            body { font-size: 11pt; color: #333; line-height: 1.4; }
+            .page { padding: 30px 35px; }
+            .header { border-bottom: 3px solid #71639e; margin-bottom: 20px; padding-bottom: 15px; }
+            .header h1 { font-size: 1.5rem; color: #71639e; margin: 0; padding-top: 5px; font-weight: 600; }
+            .header p { margin: 5px 0 0 0; color: #888; font-size: 0.85rem; }
+            h2 { font-size: 1.15rem; color: #71639e; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-top: 20px; margin-bottom: 10px; clear: both; font-weight: 600; }
+            .table { width: 100%; margin-bottom: 12px; border-collapse: collapse; font-size: 10pt; }
+            .table th, .table td { padding: 6px 10px; border: 1px solid #ddd; text-align: left; vertical-align: top; }
+            .table th { background-color: #f7f7f7; font-weight: 600; color: #555; }
+            .text-right { text-align: right; }
+            .text-muted { color: #999; }
+            .footer { border-top: 1px solid #ddd; padding-top: 10px; text-align: right; margin-top: 30px; font-size: 0.85rem; }
+        </style>
+    </template>
+
+    <template id="report_shift_template">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="template">
+                <div class="page">
+                    <meta charset="UTF-8"/>
+                    <t t-call="shift_planner_community.report_shift_template_styles"/>
+
+                    <div class="header">
+                        <h1>Plantilla de Turno</h1>
+                        <p>Fecha de emisión: <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y %H:%M')"/>
+                        </p>
+                    </div>
+
+                    <h2>
+                        <t t-esc="template.name"/>
+                    </h2>
+
+                    <table class="table table-bordered">
+                        <tr>
+                            <th style="width:35%">Nombre</th>
+                            <td>
+                                <t t-esc="template.name"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Hora de inicio</th>
+                            <td>
+                                <t t-esc="template.start_time"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Hora de fin</th>
+                            <td>
+                                <t t-esc="template.end_time"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Duración prevista</th>
+                            <td>
+                                <t t-esc="template.planned_hours"/>
+ horas</td>
+                        </tr>
+                        <tr>
+                            <th>Puesto / Rol</th>
+                            <td>
+                                <t t-esc="template.job_id.name or '—'"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Proyecto</th>
+                            <td>
+                                <t t-esc="template.project_id.name or '—'"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Compañía</th>
+                            <td>
+                                <t t-esc="template.company_id.name"/>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <div class="footer text-muted" style="margin-top: 20px; font-size: 0.85rem;">
+                        Shift Planner — Plantillas de Turno · Página <span class="page"/>
+ · Generado el <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y a las %H:%M')"/>
+                </div>
+            </div>
+        </t>
+    </t>
+</template>
+</odoo>

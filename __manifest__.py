@@ -15,6 +15,8 @@
         'views/shift_skill_views.xml',
         'wizard/shift_planning_wizard_views.xml',
         'wizard/shift_auto_assign_wizard_views.xml',
+        'reports/planning_slot_report.xml',
+        'reports/shift_template_report.xml',
     ],
     'demo': [],
     'installable': True,
