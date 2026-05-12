@@ -8,7 +8,6 @@
         <field name="target">new</field>
     </record>
 
-    <!-- NUEVA Server Action (ID diferente) -->
     <record id="action_cookast_forecast_kpi_server_action" model="ir.actions.server">
         <field name="name">Previsiones – Dashboard KPI</field>
         <field name="model_id" ref="model_cookast_forecast_kpi"/>
@@ -39,7 +38,6 @@ action = {
 
     <!-- ══════  2. Vistas  ══════ -->
 
-    <!-- Kanban KPI (usa action_cookast_forecast_kpi_wizard en el control) -->
     <record id="view_cookast_forecast_kpi_kanban" model="ir.ui.view">
         <field name="name">cookast.forecast.kpi.kanban</field>
         <field name="model">cookast.forecast.kpi</field>
@@ -77,7 +75,6 @@ action = {
         </field>
     </record>
 
-    <!-- Search KPI (mínima) -->
     <record id="view_cookast_forecast_kpi_search" model="ir.ui.view">
         <field name="name">cookast.forecast.kpi.search</field>
         <field name="model">cookast.forecast.kpi</field>
@@ -86,7 +83,6 @@ action = {
         </field>
     </record>
 
-    <!-- Wizard form (ya no necesita reorden, pero se coloca aquí) -->
     <record id="view_cookast_forecast_kpi_wizard_form" model="ir.ui.view">
         <field name="name">cookast.forecast.kpi.wizard.form</field>
         <field name="model">cookast.forecast.kpi.wizard</field>
@@ -119,10 +115,15 @@ action = {
     </record>
 
     <!-- ══════  3. Menús ══════ -->
-    <!-- Menú para abrir el wizard de filtros sin cerrar el dashboard -->
-    <menuitem id="menu_cookast_forecast_kpi_filter" name="Filtros Previsiones" parent="menu_cookast_dashboard" action="action_cookast_forecast_kpi_wizard" sequence="6"/>
-    <menuitem id="menu_cookast_forecast_kpi" name="Dashboard KPIs" parent="menu_cookast_dashboard" action="action_cookast_forecast_kpi_server_action" sequence="5"/>
+    <!-- Carpeta padre Previsiones -->
+    <!-- Carpeta pequeña solo para KPIs + filtros -->
+    <menuitem id="menu_cookast_dashboard_kpi_folder" name="Previsiones" parent="menu_cookast_dashboard" sequence="5"/>
 
+    <menuitem id="menu_cookast_forecast_kpi" name="Dashboard KPIs" parent="menu_cookast_dashboard_kpi_folder" action="action_cookast_forecast_kpi_server_action" sequence="5"/>
+
+    <menuitem id="menu_cookast_forecast_kpi_filter" name="Filtros Previsiones" parent="menu_cookast_dashboard_kpi_folder" action="action_cookast_forecast_kpi_wizard" sequence="6"/>
+
+    <!-- Previsiones (detalle) se queda fuera, como estaba originalmente -->
     <menuitem id="menu_cookast_forecast" name="Previsiones" parent="menu_cookast_dashboard" action="action_cookast_forecast_detail" sequence="10"/>
 
     <menuitem id="menu_cookast_sync_log" name="Log de Sincronizaciones" parent="menu_cookast_dashboard" action="action_cookast_sync_log" sequence="20"/>

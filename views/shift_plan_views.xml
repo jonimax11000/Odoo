@@ -12,5 +12,5 @@
     </record>
 
     <!-- Menú -->
-    <menuitem id="menu_cookast_shift_plan" name="Turnos" parent="menu_cookast_personal" action="action_cookast_shift_plan" sequence="10"/>
+    <menuitem id="menu_cookast_shift_plan" name="Turnos" parent="menu_cookast_personal" action="action_cookast_shift_plan" sequence="5"/>
 </odoo>

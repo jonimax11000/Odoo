@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_cookast_bom" model="ir.actions.report">
+        <field name="name">Listas de Materiales (Recetas)</field>
+        <field name="model">mrp.bom</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">cookast.report_cookast_bom</field>
+        <field name="report_file">cookast.report_cookast_bom</field>
+        <field name="binding_model_id" ref="mrp.model_mrp_bom"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_cookast_bom">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="bom">
+                <div class="page">
+                    <meta charset="UTF-8"/>
+                    <t t-call="cookast.cookast_report_styles"/>
+
+                    <div class="header">
+                        <img src="/cookast/static/description/icon.png" alt="Cookast" height="40"/>
+                        <h1>Lista de Materiales (Receta)</h1>
+                        <p>Fecha de emisión: <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y %H:%M')"/>
+                        </p>
+                    </div>
+
+                    <h2>
+                        <t t-esc="bom.product_tmpl_id.name or bom.product_id.display_name"/>
+ ·                        <t t-esc="bom.code or '—'"/>
+                    </h2>
+
+                    <table class="table table-bordered">
+                        <tr>
+                            <th style="width:35%">Producto</th>
+                            <td>
+                                <t t-esc="bom.product_tmpl_id.name or bom.product_id.display_name"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Referencia</th>
+                            <td>
+                                <t t-esc="bom.code or '—'"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Cantidad Producida</th>
+                            <td>
+                                <t t-esc="bom.product_qty"/>
+                                <t t-esc="bom.product_uom_id.name"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Tipo de LdM</th>
+                            <td>
+                                <t t-esc="dict(bom._fields['type'].selection).get(bom.type, bom.type)"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Activa</th>
+                            <td>
+                                <t t-if="bom.active">Sí</t>
+                                <t t-else="">No</t>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>% Merma (Cookast)</th>
+                            <td>
+                                <t t-esc="bom.waste_percentage"/>
+ %</td>
+                        </tr>
+                        <tr>
+                            <th>Tiempo Preparación (Cookast)</th>
+                            <td>
+                                <t t-esc="bom.prep_time_minutes"/>
+ min</td>
+                        </tr>
+                        <tr>
+                            <th>Coste Total Componentes</th>
+                            <td>
+                                <t t-esc="'%.2f' % bom.cookast_total_cost"/>
+ €</td>
+                        </tr>
+                        <tr>
+                            <th>Coste Unitario</th>
+                            <td>
+                                <t t-esc="'%.2f' % bom.cookast_unit_cost"/>
+ €</td>
+                        </tr>
+                        <tr>
+                            <th>Nº Componentes</th>
+                            <td>
+                                <t t-esc="bom.cookast_component_count"/>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <h3>Componentes</h3>
+                    <t t-if="bom.bom_line_ids">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Cantidad</th>
+                                    <th>Stock Disponible</th>
+                                    <th>Estado Stock</th>
+                                    <th>Coste Línea</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="bom.bom_line_ids" t-as="line">
+                                    <tr>
+                                        <td>
+                                            <t t-esc="line.product_id.display_name"/>
+                                        </td>
+                                        <td>
+                                            <t t-esc="line.product_qty"/>
+                                            <t t-esc="line.product_uom_id.name"/>
+                                        </td>
+                                        <td>
+                                            <t t-esc="line.cookast_qty_available"/>
+                                        </td>
+                                        <td>
+                                            <t t-if="line.cookast_stock_status == 'ok'">
+                                                <span class="badge badge-success">Suficiente</span>
+                                            </t>
+                                            <t t-elif="line.cookast_stock_status == 'low'">
+                                                <span class="badge badge-warning">Bajo</span>
+                                            </t>
+                                            <t t-else="">
+                                                <span class="badge badge-danger">Sin Stock</span>
+                                            </t>
+                                        </td>
+                                        <td>
+                                            <t t-esc="'%.2f' % line.cookast_line_cost"/>
+ €</td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </t>
+                    <t t-else="">
+                        <p class="text-muted">No hay componentes definidos.</p>
+                    </t>
+
+                    <t t-if="bom.cookast_notes">
+                        <h3>Notas Cookast</h3>
+                        <div class="well">
+                            <t t-esc="bom.cookast_notes"/>
+                        </div>
+                    </t>
+
+                    <div class="footer text-muted" style="margin-top: 20px; font-size: 0.85rem;">
+                        Cookast — Listas de Materiales · Página <span class="page"/>
+ · Generado el <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y a las %H:%M')"/>
+                </div>
+            </div>
+        </t>
+    </t>
+</template>
+</odoo>

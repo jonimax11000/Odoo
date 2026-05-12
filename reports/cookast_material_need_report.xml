@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_cookast_material_need" model="ir.actions.report">
+        <field name="name">Necesidades de Materia Prima</field>
+        <field name="model">cookast.material.need</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">cookast.report_cookast_material_need</field>
+        <field name="report_file">cookast.report_cookast_material_need</field>
+        <field name="binding_model_id" ref="model_cookast_material_need"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_cookast_material_need">
+        <t t-call="web.html_container">
+            <t t-set="total_purchase_cost" t-value="sum(docs.mapped('purchase_cost'))"/>
+            <t t-set="total_qty_to_purchase" t-value="sum(docs.mapped('qty_to_purchase'))"/>
+            <t t-set="currency_symbol" t-value="'€'"/>
+
+            <t t-foreach="docs" t-as="need">
+                <div class="page">
+                    <meta charset="UTF-8"/>
+                    <t t-call="cookast.cookast_report_styles"/>
+
+                    <div class="header">
+                        <img src="/cookast/static/description/icon.png" alt="Cookast" height="40"/>
+                        <h1>Necesidad de Materia Prima</h1>
+                        <p>Fecha de emisión: <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y %H:%M')"/>
+                        </p>
+                    </div>
+
+                    <h2>
+                        <t t-esc="need.product_name"/>
+ ·                        <t t-esc="need.local_id.name"/>
+                    </h2>
+
+                    <table class="table table-bordered">
+                        <tr>
+                            <th style="width:35%">Producto</th>
+                            <td>
+                                <t t-esc="need.product_name"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Local</th>
+                            <td>
+                                <t t-esc="need.local_id.name"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Unidad de medida</th>
+                            <td>
+                                <t t-esc="need.uom_id.name"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Stock Actual</th>
+                            <td>
+                                <t t-esc="need.qty_available"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Necesidad Total (LdM)</th>
+                            <td>
+                                <t t-esc="need.total_needed"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Cantidad a Comprar</th>
+                            <td>
+                                <t t-if="need.qty_to_purchase &gt; 0">
+                                    <span class="text-danger">
+                                        <t t-esc="need.qty_to_purchase"/>
+                                        <t t-esc="need.uom_id.name"/>
+                                    </span>
+                                </t>
+                                <t t-else="">
+                                    <span class="text-success">0 (stock suficiente)</span>
+                                </t>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Coste Unitario</th>
+                            <td>
+                                <t t-esc="'%.2f' % need.unit_cost"/>
+ €</td>
+                        </tr>
+                        <tr>
+                            <th>Coste Estimado de Compra</th>
+                            <td>
+                                <t t-esc="'%.2f' % need.purchase_cost"/>
+ €</td>
+                        </tr>
+                        <tr>
+                            <th>Nº LdM que lo usan</th>
+                            <td>
+                                <t t-esc="need.bom_count"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Estado del Stock</th>
+                            <td>
+                                <t t-if="need.stock_status == 'ok'">
+                                    <span class="badge badge-success">Suficiente</span>
+                                </t>
+                                <t t-elif="need.stock_status == 'low'">
+                                    <span class="badge badge-warning">Bajo</span>
+                                </t>
+                                <t t-else="">
+                                    <span class="badge badge-danger">Sin Stock</span>
+                                </t>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <div class="footer text-muted" style="margin-top: 20px; font-size: 0.85rem;">
+                        Cookast — Necesidades de Materia Prima · Página <span class="page"/>
+ · Generado el <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y a las %H:%M')"/>
+                </div>
+            </div>
+        </t>
+
+        <!-- Resumen -->
+        <t t-if="len(docs) &gt; 1">
+            <div class="page">
+                <meta charset="UTF-8"/>
+                <t t-call="cookast.cookast_report_styles"/>
+                <h1>Resumen de Necesidades de Materia Prima</h1>
+                <p>Total de productos analizados: <t t-esc="len(docs)"/>
+                </p>
+                <table class="table table-bordered">
+                    <tr>
+                        <th style="width:40%">Cantidad Total a Comprar</th>
+                        <td class="text-right">
+                            <t t-esc="total_qty_to_purchase"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Coste Total Estimado</th>
+                        <td class="text-right">
+                            <t t-esc="'%.2f' % total_purchase_cost"/>
+ €</td>
+                    </tr>
+                </table>
+                <div class="footer text-muted">Cookast — Resumen · Generado el <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y a las %H:%M')"/>
+                </div>
+            </div>
+        </t>
+    </t>
+</template>
+</odoo>

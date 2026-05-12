@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_cookast_employee" model="ir.actions.report">
+        <field name="name">Empleados Cookast</field>
+        <field name="model">hr.employee</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">cookast.report_cookast_employee</field>
+        <field name="report_file">cookast.report_cookast_employee</field>
+        <field name="binding_model_id" ref="hr.model_hr_employee"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_cookast_employee">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="emp">
+                <div class="page">
+                    <meta charset="UTF-8"/>
+                    <t t-call="cookast.cookast_report_styles"/>
+
+                    <div class="header">
+                        <img src="/cookast/static/description/icon.png" alt="Cookast" height="40"/>
+                        <h1>Ficha de Empleado Cookast</h1>
+                        <p>Fecha de emisión: <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y %H:%M')"/>
+                        </p>
+                    </div>
+
+                    <h2>
+                        <t t-esc="emp.name"/>
+                    </h2>
+
+                    <table class="table table-bordered">
+                        <tr>
+                            <th style="width:35%">Nombre</th>
+                            <td>
+                                <t t-esc="emp.name"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Puesto</th>
+                            <td>
+                                <t t-esc="emp.job_id.name or '—'"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Empresa</th>
+                            <td>
+                                <t t-esc="emp.company_id.name"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Teléfono</th>
+                            <td>
+                                <t t-esc="emp.work_phone or '—'"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Email</th>
+                            <td>
+                                <t t-esc="emp.work_email or '—'"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Nivel Cookast</th>
+                            <td>
+                                <t t-esc="dict(emp._fields['cookast_level'].selection).get(emp.cookast_level, emp.cookast_level)"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Responsable de turno</th>
+                            <td>
+                                <t t-if="emp.cookast_manages_shift">Sí</t>
+                                <t t-else="">No</t>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Coste/hora</th>
+                            <td>
+                                <t t-esc="'%.2f' % emp.cookast_hourly_cost"/>
+ €</td>
+                        </tr>
+                        <tr>
+                            <th>Máx. horas/semana</th>
+                            <td>
+                                <t t-esc="emp.cookast_max_weekly_hours"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Local principal</th>
+                            <td>
+                                <t t-esc="emp.cookast_local_id.name or '—'"/>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <h3>Turnos Planificados (Planificación)</h3>
+                    <t t-set="planning_slots" t-value="env['shift.planning.slot'].search([('employee_id', '=', emp.id)], order='start_datetime desc')"/>
+                    <t t-if="planning_slots">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Horario</th>
+                                    <th>Local</th>
+                                    <th>Habilidades</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="planning_slots" t-as="slot">
+                                    <tr>
+                                        <td>
+                                            <t t-esc="slot.start_datetime.strftime('%d/%m/%Y')"/>
+                                        </td>
+                                        <td>
+                                            <t t-esc="slot.start_datetime.strftime('%H:%M')"/>
+ –                                            <t t-esc="slot.end_datetime.strftime('%H:%M')"/>
+                                        </td>
+                                        <td>
+                                            <t t-esc="slot.cookast_local_id.name or '—'"/>
+                                        </td>
+                                        <td>
+                                            <t t-esc="', '.join(slot.required_skill_ids.mapped('name')) or '—'"/>
+                                        </td>
+                                        <td>
+                                            <t t-if="slot.state == 'published'">
+                                                <span class="badge badge-success">Publicado</span>
+                                            </t>
+                                            <t t-elif="slot.state == 'draft'">
+                                                <span class="badge badge-warning">Borrador</span>
+                                            </t>
+                                            <t t-else="">
+                                                <t t-esc="slot.state"/>
+                                            </t>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </t>
+                    <t t-else="">
+                        <p class="text-muted">No hay turnos asignados en la planificación.</p>
+                    </t>
+
+                    <!-- Histórico de shift_plan (si existe) -->
+                    <t t-if="emp.shift_plan_ids">
+                        <h3>Turnos Históricos (Shift Plan)</h3>
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Turno</th>
+                                    <th>Local</th>
+                                    <th>Rol</th>
+                                    <th>Horas</th>
+                                    <th>Coste</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="emp.shift_plan_ids" t-as="plan">
+                                    <tr>
+                                        <td>
+                                            <t t-esc="plan.date.strftime('%d/%m/%Y')"/>
+                                        </td>
+                                        <td>
+                                            <t t-esc="dict(plan._fields['shift'].selection).get(plan.shift, plan.shift)"/>
+                                        </td>
+                                        <td>
+                                            <t t-esc="plan.local_id.name"/>
+                                        </td>
+                                        <td>
+                                            <t t-esc="dict(plan._fields['role'].selection).get(plan.role, plan.role)"/>
+                                        </td>
+                                        <td>
+                                            <t t-esc="plan.planned_hours"/>
+                                        </td>
+                                        <td>
+                                            <t t-esc="'%.2f' % plan.shift_cost"/>
+ €</td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </t>
+
+                    <div class="footer text-muted" style="margin-top: 20px; font-size: 0.85rem;">
+                        Cookast — Empleados · Página <span class="page"/>
+ · Generado el <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y a las %H:%M')"/>
+                </div>
+            </div>
+        </t>
+    </t>
+</template>
+</odoo>

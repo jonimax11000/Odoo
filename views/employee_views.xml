@@ -79,8 +79,12 @@
                             <field name="image_128" widget="image" class="o_image_64_rounded" options="{'alt': 'Foto'}"/>
                         </div>
                         <div class="oe_kanban_details">
-                            <strong><field name="name"/></strong>
-                            <div><field name="job_id"/></div>
+                            <strong>
+                                <field name="name"/>
+                            </strong>
+                            <div>
+                                <field name="job_id"/>
+                            </div>
                             <div>
                                 <span class="badge rounded-pill bg-primary">
                                     <field name="cookast_level"/>
@@ -89,7 +93,9 @@
                                     <span class="badge rounded-pill bg-success ms-1">Responsable</span>
                                 </t>
                                 <t t-if="record.cookast_local_id.value">
-                                    <span class="badge rounded-pill bg-info ms-1"><field name="cookast_local_id"/></span>
+                                    <span class="badge rounded-pill bg-info ms-1">
+                                        <field name="cookast_local_id"/>
+                                    </span>
                                 </t>
                             </div>
                         </div>
@@ -120,17 +126,12 @@
         <field name="name">Personal Cookast</field>
         <field name="res_model">hr.employee</field>
         <field name="view_mode">kanban,list,form</field>
-        <field name="view_ids"
-               eval="[(5, 0, 0),
+        <field name="view_ids" eval="[(5, 0, 0),
                       (0, 0, {'view_mode': 'kanban', 'view_id': ref('view_employee_kanban_cookast')}),
                       (0, 0, {'view_mode': 'list',   'view_id': ref('view_employee_list_cookast')})]"/>
         <field name="search_view_id" ref="view_employee_search_cookast"/>
     </record>
 
     <!-- Menú -->
-    <menuitem id="menu_cookast_employees"
-              name="Empleados"
-              parent="menu_cookast_personal"
-              action="action_cookast_employees"
-              sequence="10"/>
+    <menuitem id="menu_cookast_employees" name="Empleados" parent="menu_cookast_personal" action="action_cookast_employees" sequence="10"/>
 </odoo>

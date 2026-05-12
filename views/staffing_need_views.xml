@@ -83,9 +83,7 @@
         <field name="view_mode">list,form</field>
     </record>
 
-    <!-- Menú: Dashboard Personal -->
-    <menuitem id="menu_cookast_staffing_kpi" name="Dashboard Personal" parent="menu_cookast_personal" action="action_cookast_staffing_kpi_server_action" sequence="15"/>
-
-    <!-- Menú principal: Necesidades (con lista y formulario) -->
+    <!-- ══════ Menús agrupados en carpeta "Personal" ══════ -->
+    <!-- Necesidades de personal vuelve a su sitio original -->
     <menuitem id="menu_cookast_staffing_need" name="Necesidades de personal" parent="menu_cookast_personal" action="action_cookast_staffing_need" sequence="20"/>
 </odoo>

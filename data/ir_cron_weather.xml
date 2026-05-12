@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="ir_cron_apply_weather_daily" model="ir.cron">
+        <field name="name">Cookast: Aplicar ajuste climático diario a previsiones</field>
+        <field name="model_id" ref="model_cookast_forecast"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_apply_weather_daily()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+    </record>
+</odoo>

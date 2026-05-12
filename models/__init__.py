@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from . import cookast_local
 from . import (
+    cookast_local,
     cookast_sync_log,
     cookast_forecast,
     cookast_forecast_kpi,
@@ -12,7 +12,6 @@ from . import (
     cookast_forecast_config,
     cookast_staffing_need,
     cookast_staffing_kpi,
-    product_product,
     cookast_mrp,
     cookast_shift_planning_slot
 )

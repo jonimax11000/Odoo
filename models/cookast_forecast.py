@@ -29,8 +29,6 @@ class CookastForecast(models.Model):
         ondelete='restrict',
         help='Local/sucursal al que pertenece esta previsión.',
     )
-    # location_id se deriva del almacén del local. Se mantiene como stored
-    # para compatibilidad con la SQL view de cookast.material.need y filtros.
     location_id = fields.Many2one(
         'stock.location',
         string='Ubicación de stock',
@@ -183,7 +181,6 @@ class CookastForecast(models.Model):
                     ('date_order', '<=', end_dt),
                 ]
 
-                # Filtrar por almacén del local si está configurado
                 if rec.local_id and rec.local_id.warehouse_id:
                     domain.append(
                         ('picking_type_id.warehouse_id', '=', rec.local_id.warehouse_id.id)
@@ -238,21 +235,18 @@ class CookastForecast(models.Model):
         config = self.env['cookast.forecast.config'].search([('active', '=', True)], limit=1)
         if not config:
             config = self.env['cookast.forecast.config'].create({'name': 'Configuración Forecast'})
-
+        
         day_factor_map = self._get_day_factor_map(config)
         month_factor_map = self._get_month_factor_map(config)
-
-        # Detectar si el módulo cookast_weather está instalado (modelo registrado)
-        has_weather = 'cookast.weather.forecast' in self.env
-
+        
         for record in self:
-            # Si ya tiene un valor manual y no se fuerza recálculo, no lo sobrescribimos
+            # Si ya tiene un valor manual (distinto de 0), no lo sobrescribimos
             if record.forecast_revenue > 0 and not self.env.context.get('force_recompute'):
                 continue
-
+            
             weekday = record.date.weekday()
             month = record.date.month
-
+            
             # Buscar histórico del mismo día de semana, mismo local y turno
             past_forecasts = self.search([
                 ('local_id', '=', record.local_id.id),
@@ -260,24 +254,25 @@ class CookastForecast(models.Model):
                 ('date', '<', record.date),
                 ('actual_revenue', '>', 0),
             ]).filtered(lambda f: f.date.weekday() == weekday)
-
+            
             # Limitar al número de semanas configurado
             past_forecasts = past_forecasts.sorted(key=lambda f: f.date, reverse=True)[:config.historical_weeks]
-
+            
             if past_forecasts:
                 avg_revenue = sum(past_forecasts.mapped('actual_revenue')) / len(past_forecasts)
             else:
+                # Si no hay histórico, usar valor base
                 avg_revenue = config.default_base_revenue
-
+            
             # Aplicar factores base
             day_factor = day_factor_map.get(weekday, 1.0)
             month_factor = month_factor_map.get(month, 1.0)
             base_forecast = avg_revenue * day_factor * month_factor * config.trend_factor
 
-            # ── Factor meteorológico (si el módulo cookast_weather está instalado) ──
+            # ── Factor meteorológico (si cookast_weather está instalado) ──
             weather_multiplier = 1.0
             weather_info = ""
-            if has_weather:
+            if 'cookast.weather.forecast' in self.env:
                 WeatherForecast = self.env['cookast.weather.forecast']
                 weather = WeatherForecast.search([
                     ('local_id', '=', record.local_id.id),
@@ -312,12 +307,10 @@ class CookastForecast(models.Model):
     def create(self, vals_list):
         records = super().create(vals_list)
         
-        # Recalcular forecast si es necesario
         records_to_compute = records.filtered(lambda r: r.forecast_revenue == 0)
         if records_to_compute:
             records_to_compute._compute_forecast_revenue()
         
-        # Crear staffing_need automáticamente para cada forecast nuevo
         for record in records:
             if not record.staffing_need_id:
                 staffing = self.env['cookast.staffing.need'].create({
@@ -332,7 +325,6 @@ class CookastForecast(models.Model):
         res = super().write(vals)
         if any(f in vals for f in ['date', 'location_id', 'shift', 'forecast_revenue']):
             if 'forecast_revenue' in vals:
-                # Forzar recálculo del staffing_need asociado
                 for record in self:
                     if record.staffing_need_id:
                         record.staffing_need_id._compute_staffing()
@@ -370,6 +362,62 @@ class CookastForecast(models.Model):
                 'sticky': False,
             }
         }
+
+    def action_apply_weather_to_all_forecasts(self):
+        """
+        Aplica el factor meteorológico a todos los forecasts futuros
+        y recalcula el staffing asociado.
+        """
+        if 'cookast.weather.forecast' not in self.env:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Módulo no disponible'),
+                    'message': _('El módulo cookast_weather no está instalado.'),
+                    'type': 'warning',
+                }
+            }
+
+        today = fields.Date.context_today(self)
+        forecasts = self.search([('date', '>=', today)])
+
+        if forecasts:
+            forecasts.with_context(force_recompute=True)._compute_forecast_revenue()
+            staffing_needs = self.env['cookast.staffing.need'].search([
+                ('forecast_id', 'in', forecasts.ids),
+            ])
+            if staffing_needs:
+                staffing_needs._compute_staffing()
+
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Ajuste meteorológico aplicado'),
+                'message': _('Se han recalculado %d previsiones con datos meteorológicos.') % len(forecasts),
+                'type': 'success',
+            }
+        }
+
+    @api.model
+    def _cron_apply_weather_daily(self):
+        """
+        CRON diario: recalcula forecast_revenue de todos los forecasts
+        desde hoy aplicando el factor meteorológico.
+        """
+        if 'cookast.weather.forecast' not in self.env:
+            return
+
+        today = fields.Date.context_today(self)
+        forecasts = self.search([('date', '>=', today)])
+        if forecasts:
+            forecasts.with_context(force_recompute=True)._compute_forecast_revenue()
+            staffing_needs = self.env['cookast.staffing.need'].search([
+                ('forecast_id', 'in', forecasts.ids),
+            ])
+            if staffing_needs:
+                staffing_needs._compute_staffing()
     
     def action_generate_shift_plans(self):
         """Delega la generación de asignaciones al staffing_need asociado."""
@@ -381,10 +429,8 @@ class CookastForecast(models.Model):
             })
             self.staffing_need_id = staffing.id
         
-        # Generar las asignaciones
         self.staffing_need_id.action_generate_shift_plans()
         
-        # Abrir el formulario de staffing_need para ver las asignaciones
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'cookast.staffing.need',
@@ -440,12 +486,10 @@ class CookastForecast(models.Model):
 
                 order_date = order_dt.date()
 
-                # Obtener el local desde la config del TPV
                 local = None
                 if order.config_id.cookast_local_id:
                     local = order.config_id.cookast_local_id
                 else:
-                    # Fallback: buscar por ubicación si el TPV no tiene local asignado
                     src_location = order.config_id.picking_type_id.default_location_src_id
                     if src_location:
                         local = self.env['cookast.local'].search(
@@ -502,7 +546,6 @@ class CookastForecast(models.Model):
                     continue
 
                 order_date = order_dt.date()
-                # Para ventas: buscar el local por el almacén del pedido
                 local = self.env['cookast.local'].search(
                     [('warehouse_id', '=', order.warehouse_id.id)], limit=1
                 )
@@ -532,49 +575,6 @@ class CookastForecast(models.Model):
             Log._log('cookast.forecast_sales', count, 'error', str(e))
             raise
 
-    def action_apply_weather_to_all_forecasts(self):
-        """
-        Aplica el factor meteorológico a todos los forecasts futuros que aún
-        no tengan previsión calculada, o fuerza el recálculo de todos.
-        Útil tras instalar cookast_weather o tras un cambio en los datos meteorológicos.
-        """
-        if 'cookast.weather.forecast' not in self.env:
-            return {
-                'type': 'ir.actions.client',
-                'tag': 'display_notification',
-                'params': {
-                    'title': _('Módulo no disponible'),
-                    'message': _('El módulo cookast_weather no está instalado.'),
-                    'type': 'warning',
-                }
-            }
-
-        # Buscar forecasts desde hoy en adelante
-        today = fields.Date.context_today(self)
-        forecasts = self.search([
-            ('date', '>=', today),
-        ])
-
-        if forecasts:
-            forecasts.with_context(force_recompute=True)._compute_forecast_revenue()
-            # También recalcular staffing needs asociados
-            staffing_needs = self.env['cookast.staffing.need'].search([
-                ('forecast_id', 'in', forecasts.ids),
-            ])
-            if staffing_needs:
-                staffing_needs._compute_staffing()
-
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': _('Ajuste meteorológico aplicado'),
-                'message': _('Se han recalculado %d previsiones con los datos meteorológicos actuales.') % len(forecasts),
-                'type': 'success',
-            }
-        }
-            
-
 
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
@@ -588,12 +588,6 @@ class SaleOrder(models.Model):
 
 
 class PurchaseOrder(models.Model):
-    """
-    Hook en purchase.order:
-    Al confirmar, cancelar o modificar el importe de una compra,
-    invalida los forecasts afectados para que recalculen
-    total_purchases y food_cost_pct.
-    """
     _inherit = 'purchase.order'
 
     cookast_local_id = fields.Many2one(
@@ -632,9 +626,7 @@ class PurchaseOrder(models.Model):
 
             forecasts = Forecast.search(domain)
             if forecasts:
-                # Forzar recálculo de los campos de compra en esos forecasts
                 forecasts._compute_purchase_stats()
-                # Guardar los nuevos valores en BD
                 for f in forecasts:
                     f.write({
                         'total_purchases': f.total_purchases,

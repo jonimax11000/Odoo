@@ -126,7 +126,7 @@ class CookastForecastKpi(models.TransientModel):
             'target': 'current',
             'context': {'create': False, 'edit': False},
         }
-    
+
     def test_button(self):
         return {
             'type': 'ir.actions.client',
@@ -138,16 +138,6 @@ class CookastForecastKpi(models.TransientModel):
             }
         }
 
-    def test_button(self):
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': 'OK',
-                'message': 'El botón funciona',
-            'type': 'success',
-        }
-    }
 
 class CookastForecastKpiWizard(models.TransientModel):
     """

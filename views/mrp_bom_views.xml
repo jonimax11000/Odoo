@@ -1,19 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- ═══════════════════════════════════════════════════════════════════
-         EXTENSIÓN DE PRODUCTO: Añade campo category_type a la ficha
-    ═══════════════════════════════════════════════════════════════════ -->
-
-    <record id="view_product_template_form_cookast_type" model="ir.ui.view">
-        <field name="name">product.template.form.cookast.type</field>
-        <field name="model">product.template</field>
-        <field name="inherit_id" ref="product.product_template_only_form_view"/>
-        <field name="arch" type="xml">
-            <field name="categ_id" position="after">
-                <field name="category_type"/>
-            </field>
-        </field>
-    </record>
 
     <!-- ═══════════════════════════════════════════════════════════════════
          EXTENSIÓN DE mrp.bom FORM — Campos Cookast
@@ -40,15 +26,8 @@
             <!-- Añadir columnas de stock en las líneas de componentes -->
             <xpath expr="//field[@name='bom_line_ids']//list//field[@name='product_qty']" position="after">
                 <field name="cookast_line_cost" optional="show"/>
-                <field name="cookast_qty_available"
-                       decoration-danger="cookast_qty_available &lt;= 0"
-                       decoration-warning="cookast_qty_available &lt; product_qty * 5"
-                       optional="show"/>
-                <field name="cookast_stock_status" widget="badge"
-                       decoration-success="cookast_stock_status == 'ok'"
-                       decoration-warning="cookast_stock_status == 'low'"
-                       decoration-danger="cookast_stock_status == 'out'"
-                       optional="show"/>
+                <field name="cookast_qty_available" decoration-danger="cookast_qty_available &lt;= 0" decoration-warning="cookast_qty_available &lt; product_qty * 5" optional="show"/>
+                <field name="cookast_stock_status" widget="badge" decoration-success="cookast_stock_status == 'ok'" decoration-warning="cookast_stock_status == 'low'" decoration-danger="cookast_stock_status == 'out'" optional="show"/>
             </xpath>
         </field>
     </record>

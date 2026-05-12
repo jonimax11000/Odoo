@@ -8,7 +8,7 @@
         <field name="target">new</field>
     </record>
 
-    <!-- NUEVA Server Action para abrir el Kanban de Personal -->
+    <!-- Server Action para abrir el Kanban de Personal -->
     <record id="action_cookast_staffing_kpi_server_action" model="ir.actions.server">
         <field name="name">Personal – Dashboard KPI</field>
         <field name="model_id" ref="model_cookast_staffing_kpi"/>
@@ -31,14 +31,12 @@ action = {
 
     <!-- ══════ 3. Vistas ══════ -->
 
-    <!-- Kanban KPI -->
     <record id="view_cookast_staffing_kpi_kanban" model="ir.ui.view">
         <field name="name">cookast.staffing.kpi.kanban</field>
         <field name="model">cookast.staffing.kpi</field>
         <field name="priority">16</field>
         <field name="arch" type="xml">
             <kanban create="false" edit="false" delete="false" class="o_cookast_kpi_kanban">
-
                 <field name="kpi_type"/>
                 <field name="title"/>
                 <field name="subtitle"/>
@@ -71,7 +69,6 @@ action = {
         </field>
     </record>
 
-    <!-- Search KPI (mínima) -->
     <record id="view_cookast_staffing_kpi_search" model="ir.ui.view">
         <field name="name">cookast.staffing.kpi.search</field>
         <field name="model">cookast.staffing.kpi</field>
@@ -80,7 +77,6 @@ action = {
         </field>
     </record>
 
-    <!-- Wizard Form -->
     <record id="view_cookast_staffing_kpi_wizard_form" model="ir.ui.view">
         <field name="name">cookast.staffing.kpi.wizard.form</field>
         <field name="model">cookast.staffing.kpi.wizard</field>
@@ -112,6 +108,11 @@ action = {
         </field>
     </record>
 
-    <!-- ══════ 3. Menús ══════ -->
-    <menuitem id="menu_cookast_staffing_kpi_filter" name="Filtros Personal" parent="menu_cookast_personal" action="action_cookast_staffing_kpi_wizard" sequence="16"/>
+    <!-- ══════ 4. Menús dentro de Personal ══════ -->
+    <!-- Estos menús van dentro de la carpeta Personal (definida en staffing_need_views.xml) -->
+    <menuitem id="menu_cookast_personal_kpi_folder" name="Personal" parent="menu_cookast_personal" sequence="15"/>
+
+    <menuitem id="menu_cookast_staffing_kpi" name="Dashboard Personal" parent="menu_cookast_personal_kpi_folder" action="action_cookast_staffing_kpi_server_action" sequence="15"/>
+
+    <menuitem id="menu_cookast_staffing_kpi_filter" name="Filtros Personal" parent="menu_cookast_personal_kpi_folder" action="action_cookast_staffing_kpi_wizard" sequence="16"/>
 </odoo>
