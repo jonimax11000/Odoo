@@ -33,6 +33,12 @@
         'views/mrp_bom_views.xml',
         'views/cookast_bom_views.xml',
         'views/ai_placeholder.xml',
+        # Reports
+        'reports/reports_styles.xml',
+        'reports/cookast_local_report.xml',
+        'reports/cookast_forecast_report.xml',
+        'reports/cookast_staffing_report.xml',
+        'reports/cookast_purchase_report.xml',
     ],
     'assets': {
         'web.assets_backend': [

@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_cookast_forecast" model="ir.actions.report">
+        <field name="name">Previsiones y Ventas</field>
+        <field name="model">cookast.forecast</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">cookast.report_cookast_forecast</field>
+        <field name="report_file">cookast.report_cookast_forecast</field>
+        <field name="binding_model_id" ref="model_cookast_forecast"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_cookast_forecast">
+        <t t-call="web.html_container">
+            <t t-set="total_forecast" t-value="sum(docs.mapped('forecast_revenue'))"/>
+            <t t-set="total_actual" t-value="sum(docs.mapped('actual_revenue'))"/>
+            <t t-set="total_deviation" t-value="total_actual - total_forecast"/>
+            <t t-set="total_purchases" t-value="sum(docs.mapped('total_purchases'))"/>
+            <t t-set="currency_symbol" t-value="docs[0].currency_id.symbol if docs else '€'"/>
+
+            <t t-foreach="docs" t-as="forecast">
+                <div class="page">
+                    <meta charset="UTF-8"/>
+                    <t t-call="cookast.cookast_report_styles"/>
+
+                    <div class="header">
+                        <img src="/cookast/static/description/icon.png" alt="Cookast" height="40"/>
+                        <h1>Previsión y Ventas</h1>
+                        <p>Fecha de emisión: <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y %H:%M')"/>
+                        </p>
+                    </div>
+
+                    <h2>
+                        <t t-esc="forecast.date.strftime('%d/%m/%Y')"/>
+ · 
+                        <t t-esc="forecast.local_id.name"/>
+ · 
+                        <t t-esc="dict(forecast._fields['shift'].selection).get(forecast.shift, forecast.shift)"/>
+                    </h2>
+
+                    <table class="table table-bordered">
+                        <tr>
+                            <th style="width:35%">Previsión (€)</th>
+                            <td class="text-right">
+                                <t t-esc="'%.2f' % forecast.forecast_revenue"/>
+                                <t t-esc="forecast.currency_id.symbol"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Ingreso Real (POS + Ventas)</th>
+                            <td class="text-right">
+                                <t t-esc="'%.2f' % forecast.actual_revenue"/>
+                                <t t-esc="forecast.currency_id.symbol"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Desviación (Real - Previsión)</th>
+                            <td class="text-right">
+                                <t t-if="forecast.deviation &lt; 0">
+                                    <span class="text-danger">
+                                        <t t-esc="'%+.2f' % forecast.deviation"/>
+                                        <t t-esc="forecast.currency_id.symbol"/>
+                                    </span>
+                                </t>
+                                <t t-else="">
+                                    <span class="text-success">
+                                        <t t-esc="'%+.2f' % forecast.deviation"/>
+                                        <t t-esc="forecast.currency_id.symbol"/>
+                                    </span>
+                                </t>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Compras del Día</th>
+                            <td class="text-right">
+                                <t t-esc="'%.2f' % forecast.total_purchases"/>
+                                <t t-esc="forecast.currency_id.symbol"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Food Cost (%)</th>
+                            <td class="text-right">
+                                <t t-esc="'%.2f' % forecast.food_cost_pct"/>
+ %</td>
+                        </tr>
+                    </table>
+
+                    <t t-if="forecast.staffing_need_id">
+                        <h2>Personal Necesario</h2>
+                        <t t-set="sn" t-value="forecast.staffing_need_id"/>
+                        <table class="table table-bordered">
+                            <tr>
+                                <th style="width:35%">Total Personas</th>
+                                <td>
+                                    <t t-esc="sn.total_persons"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Responsables (R)</th>
+                                <td>
+                                    <t t-esc="sn.responsible_qty"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Senior (S)</th>
+                                <td>
+                                    <t t-esc="sn.senior_qty"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Junior (J)</th>
+                                <td>
+                                    <t t-esc="sn.junior_qty"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Coste Estimado</th>
+                                <td>
+                                    <t t-esc="'%.2f' % sn.estimated_cost"/>
+                                    <t t-esc="forecast.currency_id.symbol"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Nivel de Tensión</th>
+                                <td>
+                                    <t t-if="sn.stress_level == 'low'">
+                                        <span class="badge badge-success">
+                                            <t t-esc="dict(sn._fields['stress_level'].selection).get(sn.stress_level, sn.stress_level)"/>
+                                        </span>
+                                    </t>
+                                    <t t-elif="sn.stress_level == 'medium'">
+                                        <span class="badge badge-warning">
+                                            <t t-esc="dict(sn._fields['stress_level'].selection).get(sn.stress_level, sn.stress_level)"/>
+                                        </span>
+                                    </t>
+                                    <t t-else="">
+                                        <span class="badge badge-danger">
+                                            <t t-esc="dict(sn._fields['stress_level'].selection).get(sn.stress_level, sn.stress_level)"/>
+                                        </span>
+                                    </t>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <h3>Asignaciones Generadas</h3>
+                        <t t-set="slots" t-value="forecast.planning_slot_ids"/>
+                        <t t-if="slots">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Empleado</th>
+                                        <th>Habilidad requerida</th>
+                                        <th>Horario</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="slots" t-as="slot">
+                                        <tr>
+                                            <td>
+                                                <t t-if="slot.employee_id">
+                                                    <t t-esc="slot.employee_id.name"/>
+                                                </t>
+                                                <t t-else="">
+                                                    <span class="text-muted">Sin asignar</span>
+                                                </t>
+                                            </td>
+                                            <td>
+                                                <t t-esc="', '.join(slot.required_skill_ids.mapped('name')) or '—'"/>
+                                            </td>
+                                            <td>
+                                                <t t-esc="slot.start_datetime.strftime('%H:%M')"/>
+ –                                                <t t-esc="slot.end_datetime.strftime('%H:%M')"/>
+                                            </td>
+                                            <td>
+                                                <t t-if="slot.state == 'published'">
+                                                    <span class="badge badge-success">Publicado</span>
+                                                </t>
+                                                <t t-elif="slot.state == 'draft'">
+                                                    <span class="badge badge-warning">Borrador</span>
+                                                </t>
+                                                <t t-else="">
+                                                    <t t-esc="slot.state"/>
+                                                </t>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </t>
+                        <t t-else="">
+                            <p class="text-muted">No se han generado asignaciones todavía.</p>
+                        </t>
+                    </t>
+                    <t t-else="">
+                        <h2>Personal Necesario</h2>
+                        <p class="text-muted">No se ha calculado la necesidad de personal para este turno.</p>
+                    </t>
+
+                    <div class="footer text-muted" style="margin-top: 20px; font-size: 0.85rem;">
+                        Cookast — Previsiones y Ventas · Página <span class="page"/>
+ · Generado el <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y a las %H:%M')"/>
+                </div>
+            </div>
+        </t>
+
+        <t t-if="len(docs) &gt; 1">
+            <div class="page">
+                <meta charset="UTF-8"/>
+                <t t-call="cookast.cookast_report_styles"/>
+                <h1>Resumen del Período</h1>
+                <p>Total de previsiones analizadas: <t t-esc="len(docs)"/>
+                </p>
+                <table class="table table-bordered">
+                    <tr>
+                        <th style="width:40%">Total Previsión</th>
+                        <td class="text-right">
+                            <t t-esc="'%.2f' % total_forecast"/>
+                            <t t-esc="currency_symbol"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Total Ingreso Real</th>
+                        <td class="text-right">
+                            <t t-esc="'%.2f' % total_actual"/>
+                            <t t-esc="currency_symbol"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Desviación Total</th>
+                        <td class="text-right">
+                            <t t-if="total_deviation &lt; 0">
+                                <span class="text-danger">
+                                    <t t-esc="'%+.2f' % total_deviation"/>
+                                    <t t-esc="currency_symbol"/>
+                                </span>
+                            </t>
+                            <t t-else="">
+                                <span class="text-success">
+                                    <t t-esc="'%+.2f' % total_deviation"/>
+                                    <t t-esc="currency_symbol"/>
+                                </span>
+                            </t>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Total Compras</th>
+                        <td class="text-right">
+                            <t t-esc="'%.2f' % total_purchases"/>
+                            <t t-esc="currency_symbol"/>
+                        </td>
+                    </tr>
+                </table>
+                <div class="footer text-muted">Cookast — Resumen · Generado el <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y a las %H:%M')"/>
+                </div>
+            </div>
+        </t>
+    </t>
+</template>
+</odoo>

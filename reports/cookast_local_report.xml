@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_cookast_local" model="ir.actions.report">
+        <field name="name">Locales Cookast</field>
+        <field name="model">cookast.local</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">cookast.report_cookast_local</field>
+        <field name="report_file">cookast.report_cookast_local</field>
+        <field name="binding_model_id" ref="model_cookast_local"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_cookast_local">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="local">
+                <t t-call="cookast.report_cookast_local_page"/>
+            </t>
+        </t>
+    </template>
+
+    <template id="report_cookast_local_page">
+        <div class="page">
+            <meta charset="UTF-8"/>
+            <t t-call="cookast.cookast_report_styles"/>
+            <div class="header">
+                <img src="/cookast/static/description/icon.png" alt="Cookast" height="40"/>
+                <h1>Informe de Local: <t t-esc="local.name"/>
+                </h1>
+                <p>Fecha de emisión: <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y %H:%M')"/>
+                </p>
+            </div>
+
+            <h2>Información General</h2>
+            <table class="table table-bordered">
+                <tr>
+                    <th style="width:30%">Nombre</th>
+                    <td>
+                        <t t-esc="local.name"/>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Código corto</th>
+                    <td>
+                        <t t-esc="local.short_code"/>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Activo</th>
+                    <td>
+                        <t t-if="local.active">Sí</t>
+                        <t t-else="">No (archivado)</t>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Manager</th>
+                    <td>
+                        <t t-esc="local.manager_id.name or '—'"/>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Teléfono</th>
+                    <td>
+                        <t t-esc="local.phone or '—'"/>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Email</th>
+                    <td>
+                        <t t-esc="local.email or '—'"/>
+                    </td>
+                </tr>
+            </table>
+
+            <h2>Dirección</h2>
+            <table class="table table-bordered">
+                <tr>
+                    <th>Calle</th>
+                    <td>
+                        <t t-esc="local.street or '—'"/>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Calle 2</th>
+                    <td>
+                        <t t-esc="local.street2 or '—'"/>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Código Postal</th>
+                    <td>
+                        <t t-esc="local.zip or '—'"/>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Ciudad</th>
+                    <td>
+                        <t t-esc="local.city or '—'"/>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Provincia</th>
+                    <td>
+                        <t t-esc="local.state_id.name or '—'"/>
+                    </td>
+                </tr>
+                <tr>
+                    <th>País</th>
+                    <td>
+                        <t t-esc="local.country_id.name or '—'"/>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Coordenadas GPS</th>
+                    <td>
+                        <t t-if="local.latitude and local.longitude">
+                            Lat: <t t-esc="'%.6f' % local.latitude"/>
+, Lon: <t t-esc="'%.6f' % local.longitude"/>
+                    </t>
+                    <t t-else="">Sin geolocalizar</t>
+                </td>
+            </tr>
+        </table>
+
+        <h2>Almacén</h2>
+        <table class="table table-bordered">
+            <tr>
+                <th>Almacén</th>
+                <td>
+                    <t t-esc="local.warehouse_id.name or '—'"/>
+                </td>
+            </tr>
+            <tr>
+                <th>Código Almacén</th>
+                <td>
+                    <t t-esc="local.warehouse_id.code or '—'"/>
+                </td>
+            </tr>
+            <tr>
+                <th>Ubicación de Stock</th>
+                <td>
+                    <t t-esc="local.location_id.name or '—'"/>
+                </td>
+            </tr>
+        </table>
+
+        <h2>Estadísticas</h2>
+        <table class="table table-bordered">
+            <tr>
+                <th>Nº Previsiones</th>
+                <td>
+                    <t t-esc="local.forecast_count"/>
+                </td>
+            </tr>
+            <tr>
+                <th>Última previsión</th>
+                <td>
+                    <t t-esc="local.last_forecast_date or '—'"/>
+                </td>
+            </tr>
+            <tr>
+                <th>Nº Empleados asignados</th>
+                <td>
+                    <t t-esc="local.employee_count"/>
+                </td>
+            </tr>
+            <tr>
+                <th>Nº TPVs</th>
+                <td>
+                    <t t-esc="local.pos_count"/>
+                </td>
+            </tr>
+        </table>
+
+        <h2>Empleados Asignados</h2>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Empleado</th>
+                    <th>Puesto</th>
+                    <th>Nivel Cookast</th>
+                    <th>Coste/hora</th>
+                    <th>Local Principal</th>
+                </tr>
+            </thead>
+            <tbody>
+                <t t-foreach="local.employee_ids" t-as="emp">
+                    <tr>
+                        <td>
+                            <t t-esc="emp.name"/>
+                        </td>
+                        <td>
+                            <t t-esc="emp.job_id.name or '—'"/>
+                        </td>
+                        <td>
+                            <t t-esc="dict(emp._fields['cookast_level'].selection).get(emp.cookast_level, emp.cookast_level)"/>
+                        </td>
+                        <td>
+                            <t t-esc="'%.2f' % emp.cookast_hourly_cost"/>
+ €/h</td>
+                        <td>
+                            <t t-esc="emp.cookast_local_id.name or '—'"/>
+                        </td>
+                    </tr>
+                </t>
+                <t t-if="not local.employee_ids">
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">Sin empleados asignados</td>
+                    </tr>
+                </t>
+            </tbody>
+        </table>
+
+        <h2>TPVs</h2>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Nombre TPV</th>
+                    <th>Operación de Stock</th>
+                </tr>
+            </thead>
+            <tbody>
+                <t t-foreach="local.pos_config_ids" t-as="pos">
+                    <tr>
+                        <td>
+                            <t t-esc="pos.name"/>
+                        </td>
+                        <td>
+                            <t t-esc="pos.picking_type_id.name or '—'"/>
+                        </td>
+                    </tr>
+                </t>
+                <t t-if="not local.pos_config_ids">
+                    <tr>
+                        <td colspan="2" class="text-center text-muted">Sin TPVs configurados</td>
+                    </tr>
+                </t>
+            </tbody>
+        </table>
+
+        <t t-if="local.notes">
+            <h2>Notas Internas</h2>
+            <div class="well">
+                <t t-esc="local.notes"/>
+            </div>
+        </t>
+
+        <div class="footer text-muted" style="margin-top: 20px; font-size: 0.85rem;">
+                Cookast — Sistema de Gestión de Franquicias · Página <span class="page"/>
+ · Generado el <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y a las %H:%M')"/>
+    </div>
+</div>
+</template>
+</odoo>

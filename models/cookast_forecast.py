@@ -596,6 +596,27 @@ class PurchaseOrder(models.Model):
     """
     _inherit = 'purchase.order'
 
+    cookast_local_id = fields.Many2one(
+        'cookast.local',
+        string='Local Cookast',
+        compute='_compute_cookast_local_id',
+        store=True,
+        index=True,
+        help='Local calculado a partir del almacén del tipo de operación.',
+    )
+
+    @api.depends('picking_type_id', 'picking_type_id.warehouse_id')
+    def _compute_cookast_local_id(self):
+        Local = self.env['cookast.local']
+        for po in self:
+            if po.picking_type_id and po.picking_type_id.warehouse_id:
+                local = Local.search(
+                    [('warehouse_id', '=', po.picking_type_id.warehouse_id.id)], limit=1
+                )
+                po.cookast_local_id = local.id if local else False
+            else:
+                po.cookast_local_id = False
+
     def _invalidate_cookast_forecasts(self):
         """Encuentra y recalcula los forecasts del día/almacén de estas compras."""
         Forecast = self.env['cookast.forecast']

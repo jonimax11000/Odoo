@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_cookast_purchase" model="ir.actions.report">
+        <field name="name">Compras y Food Cost</field>
+        <field name="model">purchase.order</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">cookast.report_cookast_purchase</field>
+        <field name="report_file">cookast.report_cookast_purchase</field>
+        <field name="binding_model_id" ref="purchase.model_purchase_order"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_cookast_purchase">
+        <t t-call="web.html_container">
+            <t t-set="total_amount" t-value="sum(docs.mapped('amount_total'))"/>
+            <t t-set="currency_symbol" t-value="docs[0].currency_id.symbol if docs else '€'"/>
+
+            <t t-foreach="docs" t-as="po">
+                <div class="page">
+                    <meta charset="UTF-8"/>
+                    <t t-call="cookast.cookast_report_styles"/>
+
+                    <div class="header">
+                        <img src="/cookast/static/description/icon.png" alt="Cookast" height="40"/>
+                        <h1>Compra y Food Cost</h1>
+                        <p>Fecha de emisión: <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y %H:%M')"/>
+                        </p>
+                    </div>
+
+                    <h2>
+    Pedido <t t-esc="po.name"/>
+ · 
+                    <t t-esc="po.date_order.strftime('%d/%m/%Y %H:%M')"/>
+                </h2>
+
+                <table class="table table-bordered">
+                    <tr>
+                        <th style="width:30%">Proveedor</th>
+                        <td>
+                            <t t-esc="po.partner_id.display_name"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Local</th>
+                        <td>
+                            <t t-if="po.cookast_local_id">
+                                <t t-esc="po.cookast_local_id.name"/>
+                            </t>
+                            <t t-else="">
+                                <span class="text-muted">No definido</span>
+                            </t>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Fecha Pedido</th>
+                        <td>
+                            <t t-esc="po.date_order.strftime('%d/%m/%Y %H:%M')"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Estado</th>
+                        <td>
+                            <t t-if="po.state == 'done'">
+                                <span class="badge badge-success">Realizado</span>
+                            </t>
+                            <t t-elif="po.state == 'purchase'">
+                                <span class="badge badge-warning">Confirmado</span>
+                            </t>
+                            <t t-else="">
+                                <t t-esc="po.state"/>
+                            </t>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Importe Total</th>
+                        <td class="text-right">
+                            <t t-esc="'%.2f' % po.amount_total"/>
+                            <t t-esc="po.currency_id.symbol"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Almacén destino</th>
+                        <td>
+                            <t t-esc="po.picking_type_id.warehouse_id.name or '—'"/>
+                        </td>
+                    </tr>
+                </table>
+
+                <h3>Líneas de Pedido</h3>
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Cantidad</th>
+                            <th>Precio Unitario</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="po.order_line" t-as="line">
+                            <tr>
+                                <td>
+                                    <t t-esc="line.product_id.display_name"/>
+                                </td>
+                                <td>
+                                    <t t-esc="line.product_qty"/>
+                                    <t t-esc="line.product_uom.name"/>
+                                </td>
+                                <td>
+                                    <t t-esc="'%.2f' % line.price_unit"/>
+                                    <t t-esc="po.currency_id.symbol"/>
+                                </td>
+                                <td class="text-right">
+                                    <t t-esc="'%.2f' % line.price_subtotal"/>
+                                    <t t-esc="po.currency_id.symbol"/>
+                                </td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+
+                <!-- Food Cost del día relacionado -->
+                <t t-if="po.date_order">
+                    <t t-set="order_date" t-value="po.date_order.date()"/>
+                    <t t-set="forecasts" t-value="env['cookast.forecast'].search([('date', '=', order_date), ('local_id.warehouse_id', '=', po.picking_type_id.warehouse_id.id)], limit=1)"/>
+                    <t t-if="forecasts">
+                        <h3>Food Cost del Día</h3>
+                        <t t-foreach="forecasts" t-as="fc">
+                            <table class="table table-bordered">
+                                <tr>
+                                    <th style="width:30%">Fecha</th>
+                                    <td>
+                                        <t t-esc="fc.date.strftime('%d/%m/%Y')"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Local</th>
+                                    <td>
+                                        <t t-esc="fc.local_id.name"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Turno</th>
+                                    <td>
+                                        <t t-esc="dict(fc._fields['shift'].selection).get(fc.shift, fc.shift)"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Ingreso Real</th>
+                                    <td>
+                                        <t t-esc="'%.2f' % fc.actual_revenue"/>
+                                        <t t-esc="fc.currency_id.symbol"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Compras del Día</th>
+                                    <td>
+                                        <t t-esc="'%.2f' % fc.total_purchases"/>
+                                        <t t-esc="fc.currency_id.symbol"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Food Cost</th>
+                                    <td>
+                                        <t t-esc="'%.2f' % fc.food_cost_pct"/>
+ %
+                                        <t t-if="fc.food_cost_pct &gt; 35">
+                                            <span class="text-danger"> (Elevado)</span>
+                                        </t>
+                                        <t t-elif="fc.food_cost_pct &gt; 28">
+                                            <span class="text-warning"> (Moderado)</span>
+                                        </t>
+                                        <t t-else="">
+                                            <span class="text-success"> (Bueno)</span>
+                                        </t>
+                                    </td>
+                                </tr>
+                            </table>
+                        </t>
+                    </t>
+                    <t t-else="">
+                        <p class="text-muted">No se encontró forecast para este día y almacén.</p>
+                    </t>
+                </t>
+
+                <div class="footer text-muted" style="margin-top: 20px; font-size: 0.85rem;">
+                        Cookast — Compras y Food Cost · Página <span class="page"/>
+ · Generado el <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y a las %H:%M')"/>
+            </div>
+        </div>
+    </t>
+
+    <!-- Resumen -->
+    <t t-if="len(docs) &gt; 1">
+        <div class="page">
+            <meta charset="UTF-8"/>
+            <t t-call="cookast.cookast_report_styles"/>
+            <h1>Resumen de Compras</h1>
+            <p>Total de pedidos: <t t-esc="len(docs)"/>
+            </p>
+            <table class="table table-bordered">
+                <tr>
+                    <th style="width:40%">Importe Total</th>
+                    <td class="text-right">
+                        <t t-esc="'%.2f' % total_amount"/>
+                        <t t-esc="currency_symbol"/>
+                    </td>
+                </tr>
+            </table>
+            <div class="footer text-muted">Cookast — Resumen · Generado el <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y a las %H:%M')"/>
+            </div>
+        </div>
+    </t>
+</t>
+</template>
+</odoo>

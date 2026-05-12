@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_cookast_staffing" model="ir.actions.report">
+        <field name="name">Necesidades de Personal y Turnos</field>
+        <field name="model">cookast.staffing.need</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">cookast.report_cookast_staffing</field>
+        <field name="report_file">cookast.report_cookast_staffing</field>
+        <field name="binding_model_id" ref="model_cookast_staffing_need"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_cookast_staffing">
+        <t t-call="web.html_container">
+            <t t-set="total_persons" t-value="sum(docs.mapped('total_persons'))"/>
+            <t t-set="total_cost" t-value="sum(docs.mapped('estimated_cost'))"/>
+            <t t-set="currency_symbol" t-value="docs[0].currency_id.symbol if docs else '€'"/>
+
+            <t t-foreach="docs" t-as="need">
+                <div class="page">
+                    <meta charset="UTF-8"/>
+                    <t t-call="cookast.cookast_report_styles"/>
+
+                    <div class="header">
+                        <img src="/cookast/static/description/icon.png" alt="Cookast" height="40"/>
+                        <h1>Necesidad de Personal y Turnos</h1>
+                        <p>Fecha de emisión: <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y %H:%M')"/>
+                        </p>
+                    </div>
+
+                    <h2>
+                        <t t-esc="need.date.strftime('%d/%m/%Y')"/>
+ · 
+                        <t t-esc="need.local_id.name"/>
+ · 
+                        <t t-esc="dict(need.fields_get(['shift'])['shift']['selection']).get(need.shift, need.shift)"/>
+                    </h2>
+
+                    <!-- Tabla resumen de la necesidad -->
+                    <table class="table table-bordered">
+                        <tr>
+                            <th style="width:35%">Previsión de Ingresos</th>
+                            <td>
+                                <t t-esc="'%.2f' % need.forecast_revenue"/>
+                                <t t-esc="need.currency_id.symbol"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Total Personas Necesarias</th>
+                            <td>
+                                <t t-esc="need.total_persons"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Responsables (R)</th>
+                            <td>
+                                <t t-esc="need.responsible_qty"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Senior (S)</th>
+                            <td>
+                                <t t-esc="need.senior_qty"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Junior (J)</th>
+                            <td>
+                                <t t-esc="need.junior_qty"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Coste Estimado del Turno</th>
+                            <td>
+                                <t t-esc="'%.2f' % need.estimated_cost"/>
+                                <t t-esc="need.currency_id.symbol"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Nivel de Tensión</th>
+                            <td>
+                                <t t-if="need.stress_level == 'low'">
+                                    <span class="badge badge-success">
+                                        <t t-esc="dict(need._fields['stress_level'].selection).get(need.stress_level, need.stress_level)"/>
+                                    </span>
+                                </t>
+                                <t t-elif="need.stress_level == 'medium'">
+                                    <span class="badge badge-warning">
+                                        <t t-esc="dict(need._fields['stress_level'].selection).get(need.stress_level, need.stress_level)"/>
+                                    </span>
+                                </t>
+                                <t t-else="">
+                                    <span class="badge badge-danger">
+                                        <t t-esc="dict(need._fields['stress_level'].selection).get(need.stress_level, need.stress_level)"/>
+                                    </span>
+                                </t>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <!-- Asignaciones de turno (planning slots) -->
+                    <h3>Asignaciones de Turno (Planificación)</h3>
+                    <t t-set="slots" t-value="need.forecast_id.planning_slot_ids"/>
+                    <t t-if="slots">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Empleado</th>
+                                    <th>Habilidad</th>
+                                    <th>Horario</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="slots" t-as="slot">
+                                    <tr>
+                                        <td>
+                                            <t t-if="slot.employee_id">
+                                                <t t-esc="slot.employee_id.name"/>
+                                            </t>
+                                            <t t-else="">
+                                                <span class="text-muted">Sin asignar</span>
+                                            </t>
+                                        </td>
+                                        <td>
+                                            <t t-esc="', '.join(slot.required_skill_ids.mapped('name')) or '—'"/>
+                                        </td>
+                                        <td>
+                                            <t t-esc="slot.start_datetime.strftime('%H:%M')"/>
+ –                                            <t t-esc="slot.end_datetime.strftime('%H:%M')"/>
+                                        </td>
+                                        <td>
+                                            <t t-if="slot.state == 'published'">
+                                                <span class="badge badge-success">Publicado</span>
+                                            </t>
+                                            <t t-elif="slot.state == 'draft'">
+                                                <span class="badge badge-warning">Borrador</span>
+                                            </t>
+                                            <t t-else="">
+                                                <t t-esc="slot.state"/>
+                                            </t>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </t>
+                    <t t-else="">
+                        <p class="text-muted">No se han generado asignaciones de turno para esta necesidad.</p>
+                    </t>
+
+                    <!-- También mostrar shift_plan_ids si existen (del modelo cookast.shift.plan) -->
+                    <t t-if="need.shift_plan_ids">
+                        <h3>Asignaciones Históricas (Shift Plan)</h3>
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Empleado</th>
+                                    <th>Rol</th>
+                                    <th>Horas</th>
+                                    <th>Coste</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="need.shift_plan_ids" t-as="plan">
+                                    <tr>
+                                        <td>
+                                            <t t-esc="plan.employee_id.name"/>
+                                        </td>
+                                        <td>
+                                            <t t-esc="dict(plan._fields['role'].selection).get(plan.role, plan.role)"/>
+                                        </td>
+                                        <td>
+                                            <t t-esc="plan.planned_hours"/>
+                                        </td>
+                                        <td>
+                                            <t t-esc="'%.2f' % plan.shift_cost"/>
+                                            <t t-esc="need.currency_id.symbol"/>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </t>
+
+                    <div class="footer text-muted" style="margin-top: 20px; font-size: 0.85rem;">
+                        Cookast — Necesidades de Personal y Turnos · Página <span class="page"/>
+ · Generado el <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y a las %H:%M')"/>
+                </div>
+            </div>
+        </t>
+
+        <!-- Resumen si hay múltiples necesidades -->
+        <t t-if="len(docs) &gt; 1">
+            <div class="page">
+                <meta charset="UTF-8"/>
+                <t t-call="cookast.cookast_report_styles"/>
+                <h1>Resumen de Necesidades de Personal</h1>
+                <p>Total de necesidades analizadas: <t t-esc="len(docs)"/>
+                </p>
+                <table class="table table-bordered">
+                    <tr>
+                        <th style="width:40%">Total Personas Requeridas</th>
+                        <td class="text-right">
+                            <t t-esc="total_persons"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Coste Total Estimado</th>
+                        <td class="text-right">
+                            <t t-esc="'%.2f' % total_cost"/>
+                            <t t-esc="currency_symbol"/>
+                        </td>
+                    </tr>
+                </table>
+                <div class="footer text-muted">Cookast — Resumen · Generado el <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y a las %H:%M')"/>
+                </div>
+            </div>
+        </t>
+    </t>
+</template>
+</odoo>

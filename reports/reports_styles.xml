@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="cookast_report_styles">
+        <style>
+            * {
+                font-family: sans-serif;
+            }
+            body {
+                font-size: 11pt;
+                color: #333;
+                line-height: 1.4;
+            }
+            .page {
+                padding: 30px 35px;
+            }
+            .header {
+                border-bottom: 3px solid #875A7B;
+                margin-bottom: 20px;
+                padding-bottom: 15px;
+            }
+            .header img {
+                float: left;
+                margin-right: 15px;
+            }
+            .header h1 {
+                font-size: 1.5rem;
+                color: #875A7B;
+                margin: 0;
+                padding-top: 5px;
+                font-weight: 600;
+            }
+            .header p {
+                margin: 5px 0 0 0;
+                color: #888;
+                font-size: 0.85rem;
+            }
+            h2 {
+                font-size: 1.15rem;
+                color: #875A7B;
+                border-bottom: 1px solid #ddd;
+                padding-bottom: 5px;
+                margin-top: 20px;
+                margin-bottom: 10px;
+                clear: both;
+                font-weight: 600;
+            }
+            .table {
+                width: 100%;
+                margin-bottom: 12px;
+                border-collapse: collapse;
+                font-size: 10pt;
+            }
+            .table th, .table td {
+                padding: 6px 10px;
+                border: 1px solid #ddd;
+                text-align: left;
+                vertical-align: top;
+            }
+            .table th {
+                background-color: #f7f7f7;
+                font-weight: 600;
+                color: #555;
+            }
+            .text-center { text-align: center; }
+            .text-muted { color: #999; }
+            .text-danger { color: #c0392b; font-weight: bold; }
+            .text-success { color: #27ae60; font-weight: bold; }
+            .badge {
+                display: inline-block;
+                padding: 2px 8px;
+                border-radius: 10px;
+                font-size: 9pt;
+                font-weight: bold;
+            }
+            .badge-success { background: #d4edda; color: #155724; }
+            .badge-warning { background: #fff3cd; color: #856404; }
+            .badge-danger { background: #f8d7da; color: #721c24; }
+            .footer {
+                border-top: 1px solid #ddd;
+                padding-top: 10px;
+                text-align: right;
+                margin-top: 30px;
+                font-size: 0.85rem;
+            }
+            .well {
+                background: #f9f9f9;
+                border: 1px solid #e3e3e3;
+                padding: 12px;
+                border-radius: 4px;
+                font-size: 10pt;
+            }
+            .page-break { page-break-after: always; }
+        </style>
+    </template>
+</odoo>

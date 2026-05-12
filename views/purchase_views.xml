@@ -1,16 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+
+    <record id="view_purchase_order_stats_tree" model="ir.ui.view">
+        <field name="name">purchase.order.stats.tree</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="cookast_local_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_purchase_order_search_cookast" model="ir.ui.view">
+        <field name="name">purchase.order.search.cookast</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.view_purchase_order_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <field name="cookast_local_id"/>
+                <separator/>
+                <filter string="Local" name="group_local" context="{'group_by': 'cookast_local_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
     <record id="action_cookast_purchase_stats" model="ir.actions.act_window">
         <field name="name">Estadísticas de Compras (Dashboard)</field>
         <field name="res_model">purchase.order</field>
         <field name="view_mode">list,graph,pivot,form</field>
         <field name="domain">[('state', 'in', ['purchase', 'done'])]</field>
+        <field name="view_id" ref="view_purchase_order_stats_tree"/>
     </record>
 
-    <!-- Menú que cuelga de Cookast > Compras -->
-    <menuitem id="menu_cookast_purchase_stats"
-              name="Estadísticas de Compras"
-              parent="menu_cookast_compras"
-              action="action_cookast_purchase_stats"
-              sequence="10"/>
+    <menuitem id="menu_cookast_purchase_stats" name="Estadísticas de Compras" parent="menu_cookast_compras" action="action_cookast_purchase_stats" sequence="10"/>
+
 </odoo>
