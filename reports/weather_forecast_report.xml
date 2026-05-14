@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_weather_forecast" model="ir.actions.report">
+        <field name="name">Previsión Meteorológica</field>
+        <field name="model">cookast.weather.forecast</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">cookast_weather.report_weather_forecast</field>
+        <field name="report_file">cookast_weather.report_weather_forecast</field>
+        <field name="binding_model_id" ref="model_cookast_weather_forecast"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- Estilos propios (sin dependencia de cookast) -->
+    <template id="report_weather_forecast_styles">
+        <style>
+            * { font-family: sans-serif; }
+            body { font-size: 11pt; color: #333; line-height: 1.4; }
+            .page { padding: 30px 35px; }
+            .header { border-bottom: 3px solid #3498db; margin-bottom: 20px; padding-bottom: 15px; }
+            .header h1 { font-size: 1.5rem; color: #3498db; margin: 0; padding-top: 5px; font-weight: 600; }
+            .header p { margin: 5px 0 0 0; color: #888; font-size: 0.85rem; }
+            h2 { font-size: 1.15rem; color: #3498db; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-top: 20px; margin-bottom: 10px; clear: both; font-weight: 600; }
+            .table { width: 100%; margin-bottom: 12px; border-collapse: collapse; font-size: 10pt; }
+            .table th, .table td { padding: 6px 10px; border: 1px solid #ddd; text-align: left; vertical-align: top; }
+            .table th { background-color: #f7f7f7; font-weight: 600; color: #555; }
+            .text-right { text-align: right; }
+            .text-muted { color: #999; }
+            .text-danger { color: #c0392b; font-weight: bold; }
+            .text-success { color: #27ae60; font-weight: bold; }
+            .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 9pt; font-weight: bold; }
+            .badge-success { background: #d4edda; color: #155724; }
+            .badge-warning { background: #fff3cd; color: #856404; }
+            .badge-danger { background: #f8d7da; color: #721c24; }
+            .footer { border-top: 1px solid #ddd; padding-top: 10px; text-align: right; margin-top: 30px; font-size: 0.85rem; }
+        </style>
+    </template>
+
+    <template id="report_weather_forecast">
+        <t t-call="web.html_container">
+            <t t-set="total_rain" t-value="sum(docs.mapped('rain_mm'))"/>
+            <t t-set="total_wind" t-value="sum(docs.mapped('wind_kmh'))"/>
+
+            <t t-foreach="docs" t-as="weather">
+                <div class="page">
+                    <meta charset="UTF-8"/>
+                    <t t-call="cookast_weather.report_weather_forecast_styles"/>
+
+                    <div class="header">
+                        <h1>Previsión Meteorológica</h1>
+                        <p>Fecha de emisión: <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y %H:%M')"/>
+                        </p>
+                    </div>
+
+                    <h2>
+                        <t t-esc="weather.date.strftime('%d/%m/%Y')"/>
+ · 
+                        <t t-esc="weather.local_id.name"/>
+                    </h2>
+
+                    <table class="table table-bordered">
+                        <tr>
+                            <th style="width:35%">Local</th>
+                            <td>
+                                <t t-esc="weather.local_id.name"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Fecha</th>
+                            <td>
+                                <t t-esc="weather.date.strftime('%d/%m/%Y')"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Temperatura mínima</th>
+                            <td>
+                                <t t-esc="weather.temp_min"/>
+ °C</td>
+                        </tr>
+                        <tr>
+                            <th>Temperatura máxima</th>
+                            <td>
+                                <t t-esc="weather.temp_max"/>
+ °C</td>
+                        </tr>
+                        <tr>
+                            <th>Lluvia</th>
+                            <td>
+                                <t t-esc="weather.rain_mm"/>
+ mm/día</td>
+                        </tr>
+                        <tr>
+                            <th>Viento máximo</th>
+                            <td>
+                                <t t-esc="weather.wind_kmh"/>
+ km/h</td>
+                        </tr>
+                        <tr>
+                            <th>Estado del cielo</th>
+                            <td>
+                                <t t-esc="weather.weather_condition"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Factor de ajuste demanda</th>
+                            <td>
+                                <t t-if="weather.weather_factor &lt; 0">
+                                    <span class="text-danger">
+                                        <t t-esc="weather.weather_factor"/>
+ %</span>
+                                </t>
+                                <t t-elif="weather.weather_factor &gt; 0">
+                                    <span class="text-success">+                                        <t t-esc="weather.weather_factor"/>
+ %</span>
+                                </t>
+                                <t t-else="">
+                                    <span class="text-muted">
+                                        <t t-esc="weather.weather_factor"/>
+ % (neutro)</span>
+                                </t>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <div class="footer text-muted" style="margin-top: 20px; font-size: 0.85rem;">
+                        Cookast Weather — Previsión Meteorológica · Página <span class="page"/>
+ · Generado el <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y a las %H:%M')"/>
+                </div>
+            </div>
+        </t>
+
+        <!-- Resumen -->
+        <t t-if="len(docs) &gt; 1">
+            <div class="page">
+                <meta charset="UTF-8"/>
+                <t t-call="cookast_weather.report_weather_forecast_styles"/>
+                <h1>Resumen Meteorológico</h1>
+                <p>Total de previsiones: <t t-esc="len(docs)"/>
+                </p>
+                <table class="table table-bordered">
+                    <tr>
+                        <th style="width:40%">Lluvia total acumulada</th>
+                        <td class="text-right">
+                            <t t-esc="total_rain"/>
+ mm</td>
+                    </tr>
+                    <tr>
+                        <th>Viento máximo medio</th>
+                        <td class="text-right">
+                            <t t-esc="'%.1f' % (total_wind / len(docs))"/>
+ km/h</td>
+                    </tr>
+                </table>
+                <div class="footer text-muted">Cookast Weather — Resumen · Generado el <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y a las %H:%M')"/>
+                </div>
+            </div>
+        </t>
+    </t>
+</template>
+</odoo>

@@ -1,2 +1,2 @@
 # -*- coding: utf-8 -*-
-# from . import weather_service
+from . import cookast_weather_forecast

@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vista Kanban semanal con tarjetas por local -->
+    <record id="view_cookast_weather_forecast_kanban" model="ir.ui.view">
+        <field name="name">cookast.weather.forecast.kanban</field>
+        <field name="model">cookast.weather.forecast</field>
+        <field name="arch" type="xml">
+            <kanban class="o_cookast_weather_kanban" create="false" edit="false" delete="false">
+                <field name="local_id"/>
+                <field name="date"/>
+                <field name="temp_min"/>
+                <field name="temp_max"/>
+                <field name="rain_mm"/>
+                <field name="wind_kmh"/>
+                <field name="weather_condition"/>
+                <field name="weather_factor"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="o_kanban_record">
+                            <div class="o_kanban_content">
+                                <strong>
+                                    <t t-esc="record.local_id.value"/>
+ –                                    <t t-esc="record.date.value"/>
+                                </strong>
+                                <div class="mt-2">
+                                    <i class="fa fa-thermometer-half"/>
+                                    <t t-esc="record.temp_min.value"/>
+ /                                    <t t-esc="record.temp_max.value"/>
+ °C
+                                    <span class="mx-2">|</span>
+                                    <i class="fa fa-tint"/>
+                                    <t t-esc="record.rain_mm.value"/>
+ mm
+                                </div>
+                                <div>
+                                    <i class="fa fa-flag-o"/>
+                                    <t t-esc="record.wind_kmh.value"/>
+ km/h
+                                    <span class="mx-2">|</span>
+                                    <t t-esc="record.weather_condition.value"/>
+                                </div>
+                                <h3 class="mt-3" t-attf-class="text-#{record.weather_factor.value &lt; 0 and 'danger' or 'success'}">
+                                    <t t-if="record.weather_factor.value &gt; 0">+</t>
+                                    <t t-esc="record.weather_factor.value"/>
+%
+                                </h3>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Búsqueda con filtro por local y semana actual -->
+    <record id="view_cookast_weather_forecast_search" model="ir.ui.view">
+        <field name="name">cookast.weather.forecast.search</field>
+        <field name="model">cookast.weather.forecast</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="local_id"/>
+                <field name="date"/>
+                <filter string="Esta semana" name="this_week" domain="[('date','&gt;=',context_today().strftime('%Y-%m-%d')), ('date','&lt;=',(context_today()+relativedelta(days=6)).strftime('%Y-%m-%d'))]"/>
+                <separator/>
+                <filter string="Agrupar por Local" name="group_local" context="{'group_by': 'local_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- Acción principal del kanban -->
+    <record id="action_cookast_weather_forecast" model="ir.actions.act_window">
+        <field name="name">Previsión meteorológica semanal</field>
+        <field name="res_model">cookast.weather.forecast</field>
+        <field name="view_mode">kanban,list</field>
+        <field name="search_view_id" ref="view_cookast_weather_forecast_search"/>
+        <field name="context">{'search_default_this_week': 1, 'search_default_group_local': 1}</field>
+    </record>
+
+    <!-- Acción de servidor para refrescar manualmente -->
+    <record id="action_cookast_weather_manual_refresh" model="ir.actions.server">
+        <field name="name">Actualizar previsión meteorológica</field>
+        <field name="model_id" ref="model_cookast_weather_forecast"/>
+        <field name="state">code</field>
+        <field name="code">
+model._cron_fetch_weather_forecast()
+action = {
+    'type': 'ir.actions.client',
+    'tag': 'display_notification',
+    'params': {
+        'title': 'Previsiones actualizadas',
+        'message': 'Datos meteorológicos refrescados correctamente.',
+        'type': 'success',
+    }
+}
+        </field>
+    </record>
+
+    <!-- Menús -->
+    <!-- Carpeta padre (sin acción para que se pueda desplegar) -->
+    <menuitem id="menu_cookast_weather_folder" name="Tiempo y Ajustes" parent="cookast.menu_cookast_dashboard" sequence="12"/>
+
+    <!-- Vista Kanban -->
+    <menuitem id="menu_cookast_weather" name="Previsión Semanal" parent="menu_cookast_weather_folder" action="action_cookast_weather_forecast" sequence="10"/>
+
+    <!-- Acción de actualizar -->
+    <menuitem id="menu_cookast_weather_refresh" name="Actualizar datos meteo" parent="menu_cookast_weather_folder" action="action_cookast_weather_manual_refresh" sequence="20"/>
+</odoo>
