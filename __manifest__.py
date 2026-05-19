@@ -9,6 +9,7 @@
     "depends": ["cookast"],
     "data": [
         "security/ir.model.access.csv",
+        "data/ai_config_data.xml",
         "views/ai_config_views.xml",
         "views/ai_log_views.xml",
         "views/forecast_ai_views.xml",

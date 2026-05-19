@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="ai_config_default" model="cookast.ai.config" forcecreate="True">
+        <field name="name">Configuración IA</field>
+        <field name="ollama_endpoint">http://172.23.0.1:11434</field>
+        <field name="model_name">llama3.1:8b</field>
+        <field name="temperature">0.1</field>
+        <field name="max_tokens">100</field>
+        <field name="active" eval="True" />
+    </record>
+</odoo>

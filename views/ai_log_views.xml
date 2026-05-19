@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_cookast_ai_log_list" model="ir.ui.view">
+        <field name="name">cookast.ai.log.list</field>
+        <field name="model">cookast.ai.log</field>
+        <field name="arch" type="xml">
+            <list create="false" edit="false" delete="false">
+                <field name="create_date" />
+                <field name="model_used" />
+                <field name="tokens" />
+                <field name="duration" />
+            </list>
+        </field>
+    </record>
+
+    <record id="action_cookast_ai_log" model="ir.actions.act_window">
+        <field name="name">Log de IA</field>
+        <field name="res_model">cookast.ai.log</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_cookast_ai_log"
+        name="Log de IA"
+        parent="cookast.menu_cookast_ai"
+        action="action_cookast_ai_log"
+        sequence="20" />
+</odoo>

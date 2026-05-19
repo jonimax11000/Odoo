@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_cookast_forecast_form_ai" model="ir.ui.view">
+        <field name="name">cookast.forecast.form.ai</field>
+        <field name="model">cookast.forecast</field>
+        <field name="inherit_id" ref="cookast.view_cookast_forecast_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_ai_forecast" string="Calcular con IA" type="object"
+                    class="btn-secondary" />
+            </xpath>
+            <xpath expr="//field[@name='forecast_revenue']" position="after">
+                <field name="ai_forecast_revenue" />
+            </xpath>
+        </field>
+    </record>
+</odoo>
