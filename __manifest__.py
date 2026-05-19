@@ -1,0 +1,20 @@
+{
+    "name": "Cookast AI",
+    "version": "19.0.1.0.0",
+    "category": "Operations/Foodservice",
+    "summary": "Integración de IA local para previsiones y automatización",
+    "author": "Apunts Informática",
+    "website": "https://apuntsinformatica.apuntserp.es/",
+    "license": "LGPL-3",
+    "depends": ["cookast"],
+    "data": [
+        "security/ir.model.access.csv",
+        "views/ai_config_views.xml",
+        "views/ai_log_views.xml",
+        "views/forecast_ai_views.xml",
+        "data/ir_cron_ai_forecast.xml",
+    ],
+    "installable": True,
+    "application": False,
+    "auto_install": False,
+}
