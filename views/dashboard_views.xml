@@ -12,16 +12,16 @@
             <graph type="bar" stacked="False">
                 <!-- Eje X: agrupado por fecha (día). El usuario puede
                      cambiar a semana/mes desde el menú de la vista. -->
-                <field name="date" type="row" interval="day"/>
+                <field name="date" type="row" interval="day" />
                 <!-- Eje de serie: un trazo por local. Cuando el usuario
                      filtra solo un local en el searchpanel, queda una sola
                      serie; si selecciona varios, aparece uno por local. -->
-                <field name="local_id" type="col"/>
+                <field name="local_id" type="col" />
                 <!-- Medida por defecto: previsión. El usuario puede añadir
                      actual_revenue, deviation o food_cost_pct desde "Medidas". -->
-                <field name="forecast_revenue" type="measure"/>
-                <field name="actual_revenue" type="measure"/>
-                <field name="deviation" type="measure"/>
+                <field name="forecast_revenue" type="measure" />
+                <field name="actual_revenue" type="measure" />
+                <field name="deviation" type="measure" />
             </graph>
         </field>
     </record>
@@ -32,17 +32,27 @@
         <field name="model">cookast.forecast</field>
         <field name="arch" type="xml">
             <pivot>
-                <field name="date" type="row"/>
-                <field name="shift" type="row"/>
+                <field name="date" type="row" />
+                <field name="shift" type="row" />
                 <!-- Columnas: un bloque por local activo en Cookast.
                      Al filtrar en el searchpanel se reduce dinámicamente. -->
-                <field name="local_id" type="col"/>
-                <field name="forecast_revenue" type="measure"/>
-                <field name="actual_revenue" type="measure"/>
-                <field name="deviation" type="measure"/>
-                <field name="food_cost_pct" type="measure"/>
-                <field name="total_purchases" type="measure"/>
+                <field name="local_id" type="col" />
+                <field name="forecast_revenue" type="measure" />
+                <field name="actual_revenue" type="measure" />
+                <field name="deviation" type="measure" />
+                <field name="food_cost_pct" type="measure" />
+                <field name="total_purchases" type="measure" />
             </pivot>
+        </field>
+    </record>
+
+    <!-- Acción de servidor para generar previsiones mensuales -->
+    <record id="action_server_generate_monthly_forecasts" model="ir.actions.server">
+        <field name="name">Generar previsiones mensuales</field>
+        <field name="model_id" ref="model_cookast_forecast" />
+        <field name="state">code</field>
+        <field name="code">
+model._generate_monthly_forecasts()
         </field>
     </record>
 
@@ -52,14 +62,18 @@
         <field name="model">cookast.forecast</field>
         <field name="arch" type="xml">
             <list decoration-danger="actual_revenue &gt; forecast_revenue">
-                <field name="date"/>
-                <field name="local_id"/>
-                <field name="shift"/>
-                <field name="forecast_revenue" sum="Total Previsión"/>
-                <field name="actual_revenue" sum="Total Real"/>
-                <field name="total_purchases" string="Compras" sum="Compras"/>
-                <field name="food_cost_pct" widget="percentage"/>
-                <field name="currency_id" column_invisible="1"/>
+                <header>
+                    <button name="%(action_server_generate_monthly_forecasts)d"
+                        string="Generar previsiones mensuales" type="action" class="btn-secondary" display="always" />
+                </header>
+                <field name="date" />
+                <field name="local_id" />
+                <field name="shift" />
+                <field name="forecast_revenue" sum="Total Previsión" />
+                <field name="actual_revenue" sum="Total Real" />
+                <field name="total_purchases" string="Compras" sum="Compras" />
+                <field name="food_cost_pct" widget="percentage" />
+                <field name="currency_id" column_invisible="1" />
             </list>
         </field>
     </record>
@@ -70,11 +84,14 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="action_generate_shift_plans" type="object" string="Generar asignaciones" class="btn-primary" confirm="¿Generar asignaciones de personal para este turno?"/>
+                    <button name="action_generate_shift_plans" type="object"
+                        string="Generar asignaciones" class="btn-primary"
+                        confirm="¿Generar asignaciones de personal para este turno?" />
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button name="action_view_planning_slots" type="object" class="oe_stat_button" icon="fa-calendar">
+                        <button name="action_view_planning_slots" type="object"
+                            class="oe_stat_button" icon="fa-calendar">
                             <div class="o_stat_info">
                                 <span class="o_stat_text">Turnos</span>
                             </div>
@@ -82,40 +99,46 @@
                     </div>
                     <group>
                         <group>
-                            <field name="date"/>
-                            <field name="local_id"/>
-                            <field name="shift"/>
+                            <field name="date" />
+                            <field name="local_id" />
+                            <field name="shift" />
                         </group>
                         <group>
-                            <field name="currency_id" invisible="1"/>
-                            <field name="forecast_revenue"/>
-                            <field name="actual_revenue"/>
-                            <field name="deviation"/>
-                            <field name="total_purchases" string="Compras del Día"/>
-                            <field name="food_cost_pct" widget="percentage" string="Food Cost Diario"/>
+                            <field name="currency_id" invisible="1" />
+                            <field name="forecast_revenue" />
+                            <field name="actual_revenue" />
+                            <field name="deviation" />
+                            <field name="total_purchases" string="Compras del Día" />
+                            <field name="food_cost_pct" widget="percentage"
+                                string="Food Cost Diario" />
                         </group>
                     </group>
 
                     <!-- Enlace a necesidad de personal -->
                     <group string="Personal necesario" colspan="4">
-                        <field name="staffing_need_id" string="Necesidad de personal" options="{'no_create': True, 'no_open': False}">
+                        <field name="staffing_need_id" string="Necesidad de personal"
+                            options="{'no_create': True, 'no_open': False}">
                             <form string="Necesidad de personal">
                                 <group>
                                     <group>
-                                        <field name="total_persons"/>
-                                        <field name="responsible_qty"/>
+                                        <field name="total_persons" />
+                                        <field name="responsible_qty" />
                                     </group>
                                     <group>
-                                        <field name="senior_qty"/>
-                                        <field name="junior_qty"/>
+                                        <field name="senior_qty" />
+                                        <field name="junior_qty" />
                                     </group>
                                 </group>
                                 <group>
-                                    <field name="estimated_cost"/>
-                                    <field name="stress_level" widget="badge" decoration-success="stress_level == 'low'" decoration-warning="stress_level == 'medium'" decoration-danger="stress_level == 'high' or stress_level == 'critical'"/>
+                                    <field name="estimated_cost" />
+                                    <field name="stress_level" widget="badge"
+                                        decoration-success="stress_level == 'low'"
+                                        decoration-warning="stress_level == 'medium'"
+                                        decoration-danger="stress_level == 'high' or stress_level == 'critical'" />
                                 </group>
-                                <separator string="Asignaciones generadas"/>
-                                <field name="planning_slot_ids" context="{'tree_view_ref': 'shift_planner_community.view_shift_planning_slot_tree'}"/>
+                                <separator string="Asignaciones generadas" />
+                                <field name="planning_slot_ids"
+                                    context="{'tree_view_ref': 'shift_planner_community.view_shift_planning_slot_tree'}" />
                             </form>
                         </field>
                     </group>
@@ -124,10 +147,10 @@
                         <page string="Pedidos POS">
                             <field name="pos_order_ids" readonly="1">
                                 <list>
-                                    <field name="name"/>
-                                    <field name="date_order"/>
-                                    <field name="amount_total"/>
-                                    <field name="state"/>
+                                    <field name="name" />
+                                    <field name="date_order" />
+                                    <field name="amount_total" />
+                                    <field name="state" />
                                 </list>
                             </field>
                         </page>
@@ -143,32 +166,32 @@
         <field name="model">cookast.forecast</field>
         <field name="arch" type="xml">
             <search>
-                <field name="date"/>
-                <field name="local_id"/>
+                <field name="date" />
+                <field name="local_id" />
 
                 <!-- Filtros rápidos por turno -->
-                <separator/>
+                <separator />
                 <filter string="Comida" name="filter_lunch"
-                        domain="[('shift', '=', 'lunch')]"/>
+                    domain="[('shift', '=', 'lunch')]" />
                 <filter string="Cena" name="filter_dinner"
-                        domain="[('shift', '=', 'dinner')]"/>
+                    domain="[('shift', '=', 'dinner')]" />
 
                 <!-- Filtros de fecha -->
-                <separator/>
+                <separator />
                 <filter string="Esta semana" name="filter_this_week"
-                        domain="[('date', '&gt;=', (context_today() - relativedelta(weekday=0)).strftime('%Y-%m-%d')),
-                                 ('date', '&lt;=', (context_today() + relativedelta(weekday=6)).strftime('%Y-%m-%d'))]"/>
+                    domain="[('date', '&gt;=', (context_today() - relativedelta(weekday=0)).strftime('%Y-%m-%d')),
+                                 ('date', '&lt;=', (context_today() + relativedelta(weekday=6)).strftime('%Y-%m-%d'))]" />
                 <filter string="Este mes" name="filter_this_month"
-                        domain="[('date', '&gt;=', context_today().strftime('%Y-%m-01'))]"/>
+                    domain="[('date', '&gt;=', context_today().strftime('%Y-%m-01'))]" />
 
                 <!-- Agrupaciones -->
-                <separator/>
+                <separator />
                 <filter string="Fecha" name="group_by_date"
-                        context="{'group_by': 'date'}"/>
+                    context="{'group_by': 'date'}" />
                 <filter string="Local" name="group_by_local"
-                        context="{'group_by': 'local_id'}"/>
+                    context="{'group_by': 'local_id'}" />
                 <filter string="Turno" name="group_by_shift"
-                        context="{'group_by': 'shift'}"/>
+                    context="{'group_by': 'shift'}" />
 
                 <!-- ══════════════════════════════════════════════════════
                      SEARCHPANEL DINÁMICO DE LOCALES
@@ -178,15 +201,15 @@
                 ══════════════════════════════════════════════════════ -->
                 <searchpanel>
                     <field name="local_id"
-                           icon="fa-building"
-                           enable_counters="1"
-                           select="multi"
-                           string="Locales"/>
+                        icon="fa-building"
+                        enable_counters="1"
+                        select="multi"
+                        string="Locales" />
                     <field name="shift"
-                           icon="fa-clock-o"
-                           enable_counters="1"
-                           select="multi"
-                           string="Turno"/>
+                        icon="fa-clock-o"
+                        enable_counters="1"
+                        select="multi"
+                        string="Turno" />
                 </searchpanel>
             </search>
         </field>
@@ -198,11 +221,11 @@
         <field name="model">cookast.sync.log</field>
         <field name="arch" type="xml">
             <list decoration-danger="status=='error'">
-                <field name="sync_date"/>
-                <field name="model_synced"/>
-                <field name="records_processed"/>
-                <field name="status"/>
-                <field name="error_message"/>
+                <field name="sync_date" />
+                <field name="model_synced" />
+                <field name="records_processed" />
+                <field name="status" />
+                <field name="error_message" />
             </list>
         </field>
     </record>
@@ -212,7 +235,7 @@
     <!-- Acción de sincronización de datos (usada internamente) -->
     <record id="action_cookast_forecast_sync" model="ir.actions.server">
         <field name="name">Sincronizar Previsiones</field>
-        <field name="model_id" ref="model_cookast_forecast"/>
+        <field name="model_id" ref="model_cookast_forecast" />
         <field name="state">code</field>
         <field name="code">
 # Sincronizar POS y Ventas en tiempo real

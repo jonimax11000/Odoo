@@ -13,5 +13,8 @@ from . import (
     cookast_staffing_need,
     cookast_staffing_kpi,
     cookast_mrp,
-    cookast_shift_planning_slot
+    cookast_shift_planning_slot,
+    cookast_anomaly_config,
+    cookast_anomaly_rule,
+    cookast_anomaly_alert,
 )

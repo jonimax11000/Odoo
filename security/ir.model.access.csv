@@ -10,3 +10,6 @@ access_cookast_forecast_kpi,cookast.forecast.kpi,model_cookast_forecast_kpi,base
 access_cookast_forecast_kpi_wizard,cookast.forecast.kpi.wizard,model_cookast_forecast_kpi_wizard,base.group_user,1,1,1,1
 access_cookast_staffing_kpi,cookast.staffing.kpi,model_cookast_staffing_kpi,base.group_user,1,1,1,1
 access_cookast_staffing_kpi_wizard,cookast.staffing.kpi.wizard,model_cookast_staffing_kpi_wizard,base.group_user,1,1,1,1
+access_cookast_anomaly_config,cookast.anomaly.config,model_cookast_anomaly_config,base.group_user,1,1,1,0
+access_cookast_anomaly_rule,cookast.anomaly.rule,model_cookast_anomaly_rule,base.group_user,1,1,1,0
+access_cookast_anomaly_alert,cookast.anomaly.alert,model_cookast_anomaly_alert,base.group_user,1,1,1,0

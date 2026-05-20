@@ -733,6 +733,56 @@ Completa la serie con el siguiente número. Responde solo con el número."""
             Log._log("cookast.forecast_sales", count, "error", str(e))
             raise
 
+    @api.model
+    def _generate_monthly_forecasts(self):
+        """Crea previsiones para todos los días desde hoy hasta el final del mes
+        siguiente, para todos los locales activos, si no existen ya.
+        """
+        from datetime import timedelta
+
+        today = fields.Date.context_today(self)
+        # Primer día del mes siguiente
+        next_month = today.replace(day=1) + timedelta(days=32)
+        next_month = next_month.replace(day=1)
+        # Último día del mes siguiente
+        last_day = (next_month + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+
+        locales = self.env["cookast.local"].search([("active", "=", True)])
+        shifts = ["lunch", "dinner"]
+        created = 0
+        for loc in locales:
+            d = today
+            while d <= last_day:
+                for shift in shifts:
+                    exists = self.search(
+                        [
+                            ("local_id", "=", loc.id),
+                            ("date", "=", d),
+                            ("shift", "=", shift),
+                        ],
+                        limit=1,
+                    )
+                    if not exists:
+                        self.create(
+                            {
+                                "local_id": loc.id,
+                                "date": d,
+                                "shift": shift,
+                                "forecast_revenue": 0.0,
+                            }
+                        )
+                        created += 1
+                d += timedelta(days=1)
+
+        if created:
+            # Recalcular forecast_revenue para los nuevos registros
+            new_forecasts = self.search([("forecast_revenue", "=", 0)])
+            new_forecasts._compute_forecast_revenue()
+            _logger.info(
+                "_generate_monthly_forecasts: %d previsiones creadas.", created
+            )
+        return created
+
 
 class SaleOrder(models.Model):
     _inherit = "sale.order"
