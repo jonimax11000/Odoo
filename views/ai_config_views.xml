@@ -15,12 +15,18 @@
                             <field name="name" placeholder="Nombre de la configuración" />
                         </h1>
                     </div>
-                    <group string="Conexión Ollama">
-                        <field name="ollama_endpoint" />
-                        <field name="model_name" />
-                        <field name="temperature" />
-                        <field name="max_tokens" />
-                        <field name="active" />
+                    <group>
+                        <group string="Conexión IA">
+                            <field name="provider" />
+                            <field name="api_key" invisible="provider == 'ollama'" password="True" />
+                            <field name="endpoint" invisible="provider != 'ollama'" />
+                            <field name="model_name" />
+                        </group>
+                        <group string="Parámetros">
+                            <field name="temperature" />
+                            <field name="max_tokens" />
+                            <field name="active" />
+                        </group>
                     </group>
                 </sheet>
             </form>
@@ -37,7 +43,7 @@
                         class="btn-primary" />
                 </header>
                 <field name="name" />
-                <field name="ollama_endpoint" />
+                <field name="provider" />
                 <field name="model_name" />
                 <field name="active" widget="boolean_toggle" />
             </list>

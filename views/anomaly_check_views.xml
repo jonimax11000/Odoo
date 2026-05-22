@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_cookast_anomaly_check_form" model="ir.ui.view">
+        <field name="name">cookast.anomaly.check.form</field>
+        <field name="model">cookast.anomaly.check</field>
+        <field name="arch" type="xml">
+            <form string="Revisar Anomalías">
+                <sheet>
+                    <div class="oe_title">
+                        <p>Haga clic en el botón de abajo para ejecutar manualmente todas las reglas de detección de anomalías y generar nuevas alertas si se encuentran desviaciones.</p>
+                    </div>
+                </sheet>
+                <footer>
+                    <button name="action_run_checks" string="Ejecutar Análisis" type="object" class="btn-primary" data-hotkey="q"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel" data-hotkey="z"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_cookast_anomaly_check" model="ir.actions.act_window">
+        <field name="name">Revisar Anomalías Manualmente</field>
+        <field name="res_model">cookast.anomaly.check</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_cookast_anomaly_check"
+              name="Revisar Anomalías"
+              parent="cookast.menu_cookast_ai"
+              action="action_cookast_anomaly_check"
+              sequence="50"/>
+
+    <!-- Optionally, you can add a menu item for the wizard here -->
+</odoo>

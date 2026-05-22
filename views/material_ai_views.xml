@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Herencia de la vista lista para añadir el botón en el header -->
+    <record id="view_cookast_material_need_list_ai" model="ir.ui.view">
+        <field name="name">cookast.material.need.list.ai</field>
+        <field name="model">cookast.material.need</field>
+        <field name="inherit_id" ref="cookast.view_cookast_material_need_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//list" position="inside">
+                <header>
+                    <button name="action_ai_suggest_all_purchases"
+                            string="Sugerir compras con IA"
+                            type="object"
+                            class="btn-secondary"
+                            display="always"/>
+                </header>
+            </xpath>
+        </field>
+    </record>
+</odoo>

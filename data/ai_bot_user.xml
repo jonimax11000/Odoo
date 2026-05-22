@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Group for AI Bot -->
+        <record id="group_ai_bot" model="res.groups">
+            <field name="name">Bot IA Cookast</field>
+        </record>
+
+        <!-- Bot Partner -->
+        <record id="bot_partner" model="res.partner">
+            <field name="name">Cookast IA</field>
+            <field name="email">cookast-bot@localhost</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <!-- Bot User -->
+        <record id="bot_user" model="res.users">
+            <field name="name">Cookast IA</field>
+            <field name="login">cookast_bot</field>
+            <field name="partner_id" ref="bot_partner"/>
+            <field name="active" eval="True"/>
+            <field name="group_ids" eval="[(6, 0, [ref('base.group_user'), ref('cookast_ai.group_ai_bot')])]"/>
+        </record>
+
+        <!-- Discuss Channel -->
+        <record id="channel_ai_assistant" model="discuss.channel">
+            <field name="name">Cookast IA Asistente</field>
+            <field name="channel_type">channel</field>
+            <field name="group_public_id" eval="False"/>
+            <field name="channel_member_ids" eval="[
+                (0, 0, {'partner_id': ref('base.partner_admin')}),
+                (0, 0, {'partner_id': ref('cookast_ai.bot_partner')})
+            ]"/>
+        </record>
+    </data>
+</odoo>

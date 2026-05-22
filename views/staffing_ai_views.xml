@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_cookast_staffing_need_form_ai" model="ir.ui.view">
+        <field name="name">cookast.staffing.need.form.ai</field>
+        <field name="model">cookast.staffing.need</field>
+        <field name="inherit_id" ref="cookast.view_cookast_staffing_need_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_ai_generate_shift_plans" string="Generar con IA" type="object"
+                    class="btn-secondary" />
+            </xpath>
+        </field>
+    </record>
+</odoo>

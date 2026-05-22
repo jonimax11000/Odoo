@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_cookast_ai_price_recommendation_form" model="ir.ui.view">
+        <field name="name">cookast.ai.price.recommendation.form</field>
+        <field name="model">cookast.ai.price.recommendation</field>
+        <field name="arch" type="xml">
+            <form string="Recomendación de precios">
+                <header>
+                    <button name="action_generate" string="Generar Recomendaciones" type="object" class="btn-primary" />
+                </header>
+                <sheet>
+                    <group>
+                        <field name="local_id" options="{'no_create': True}" placeholder="Todos los locales" />
+                        <field name="product_ids" widget="many2many_tags" options="{'no_create': True}" placeholder="Todos los productos (venta)" />
+                    </group>
+                    <notebook>
+                        <page string="Recomendaciones">
+                            <field name="recommendation_lines" nolabel="1">
+                                <list editable="bottom" create="0">
+                                    <field name="product_id" />
+                                    <field name="current_price" />
+                                    <field name="current_cost" />
+                                    <field name="current_margin" />
+                                    <field name="suggested_price" />
+                                    <field name="reason" />
+                                    <field name="apply" />
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <footer>
+                    <button name="action_apply" string="Aplicar Seleccionados" type="object" class="btn-primary" data-hotkey="q"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel" data-hotkey="z"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_cookast_ai_price_recommendation" model="ir.actions.act_window">
+        <field name="name">Recomendación de precios</field>
+        <field name="res_model">cookast.ai.price.recommendation</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_cookast_ai_price_recommendation"
+              name="Recomendación de precios"
+              parent="cookast.menu_cookast_ai"
+              action="action_cookast_ai_price_recommendation"
+              sequence="40"/>
+</odoo>

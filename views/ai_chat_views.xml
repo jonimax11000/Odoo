@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_cookast_ai_chat_form" model="ir.ui.view">
+        <field name="name">cookast.ai.chat.form</field>
+        <field name="model">cookast.ai.chat</field>
+        <field name="arch" type="xml">
+            <form string="Chat IA Cookast">
+                <sheet>
+                    <group>
+                        <field name="question"
+                            placeholder="Ej: ¿Cuántas personas necesito mañana en Benifaio para la comida?" />
+                    </group>
+                    <group>
+                        <field name="response" readonly="1" nolabel="1" style="min-height: 150px;" />
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_send" string="Enviar" type="object" class="btn-primary" />
+                    <button string="Cerrar" class="btn-secondary" special="cancel" />
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Acción para abrir el chat -->
+    <record id="action_cookast_ai_chat" model="ir.actions.act_window">
+        <field name="name">Chat IA Cookast</field>
+        <field name="res_model">cookast.ai.chat</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_cookast_ai_chat"
+        name="Chat IA"
+        parent="cookast.menu_cookast_ai"
+        action="action_cookast_ai_chat"
+        sequence="5" />
+</odoo>
