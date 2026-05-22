@@ -26,6 +26,7 @@
         "views/local_views.xml",
         # Dashboard
         "views/dashboard_views.xml",
+        "views/forecast_customers_views.xml",
         "views/forecast_kpi_views.xml",
         "views/forecast_config_views.xml",
         # Personal (carpeta primero, luego menús que la usan)

@@ -17,4 +17,5 @@ from . import (
     cookast_anomaly_config,
     cookast_anomaly_rule,
     cookast_anomaly_alert,
+    cookast_forecast_customers,
 )

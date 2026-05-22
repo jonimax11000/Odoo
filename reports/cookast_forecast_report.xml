@@ -16,6 +16,7 @@
             <t t-set="total_actual" t-value="sum(docs.mapped('actual_revenue'))"/>
             <t t-set="total_deviation" t-value="total_actual - total_forecast"/>
             <t t-set="total_purchases" t-value="sum(docs.mapped('total_purchases'))"/>
+            <t t-set="total_customers" t-value="sum(docs.mapped('expected_customers'))"/>
             <t t-set="currency_symbol" t-value="docs[0].currency_id.symbol if docs else '€'"/>
 
             <t t-foreach="docs" t-as="forecast">
@@ -82,6 +83,12 @@
                             <td class="text-right">
                                 <t t-esc="'%.2f' % forecast.food_cost_pct"/>
  %</td>
+                        </tr>
+                        <tr>
+                            <th>Clientes Esperados</th>
+                            <td class="text-right">
+                                <t t-esc="forecast.expected_customers"/>
+                            </td>
                         </tr>
                     </table>
 
@@ -248,6 +255,12 @@
                         <td class="text-right">
                             <t t-esc="'%.2f' % total_purchases"/>
                             <t t-esc="currency_symbol"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Total Clientes Esperados</th>
+                        <td class="text-right">
+                            <t t-esc="total_customers"/>
                         </td>
                     </tr>
                 </table>

@@ -778,6 +778,11 @@ Completa la serie con el siguiente número. Responde solo con el número."""
             # Recalcular forecast_revenue para los nuevos registros
             new_forecasts = self.search([("forecast_revenue", "=", 0)])
             new_forecasts._compute_forecast_revenue()
+            
+            # Calcular las previsiones de clientes para cada nueva previsión
+            if hasattr(new_forecasts, 'action_compute_customers'):
+                new_forecasts.action_compute_customers()
+                
             _logger.info(
                 "_generate_monthly_forecasts: %d previsiones creadas.", created
             )
